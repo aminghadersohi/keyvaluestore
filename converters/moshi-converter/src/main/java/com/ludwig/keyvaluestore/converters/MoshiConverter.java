@@ -1,0 +1,62 @@
+package com.ludwig.keyvaluestore.converters;
+
+import com.ludwig.keyvaluestore.Converter;
+import com.ludwig.keyvaluestore.ConverterException;
+import com.ludwig.keyvaluestore.storage.Store;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
+import okio.BufferedSink;
+import okio.BufferedSource;
+import okio.Okio;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.reflect.Type;
+
+public class MoshiConverter implements Converter {
+    private final Moshi moshi;
+
+    public MoshiConverter() {
+        this(new Moshi.Builder().build());
+    }
+
+    public MoshiConverter(Moshi moshi) {
+        this.moshi = moshi;
+    }
+
+    @Override
+    public <T> void write(T data, Type type, Store store) throws ConverterException {
+        try {
+            OutputStream outputStream = store.output();
+            JsonAdapter<T> adapter = moshi.adapter(type);
+            BufferedSink sink = Okio.buffer(Okio.sink(outputStream));
+            adapter.toJson(sink, data);
+            sink.close();
+            outputStream.close();
+        } catch (Exception e) {
+            throw new ConverterException(e);
+        }
+    }
+
+    @Override
+    public <T> T read(Store store, Type type) {
+        try {
+            InputStream inputStream = store.input();
+            JsonAdapter<T> adapter = moshi.adapter(type);
+            BufferedSource source = Okio.buffer(Okio.source(inputStream));
+            T value;
+
+            if (source.exhausted()) {
+                value = null;
+            } else {
+                value = adapter.nullSafe().fromJson(source);
+            }
+
+            source.close();
+            inputStream.close();
+            return value;
+        } catch (Exception e) {
+            throw new ConverterException(e);
+        }
+    }
+}
