@@ -1,0 +1,16 @@
+language: java
+
+jdk:
+  - oraclejdk8
+
+script:
+  - ./gradlew clean build check
+
+notifications:
+  email: false
+
+sudo: false
+
+cache:
+  directories:
+    - $HOME/.gradle
