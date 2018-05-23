@@ -16,6 +16,7 @@
 package com.ludwig.keyvaluestore.storage;
 
 import com.ludwig.keyvaluestore.Converter;
+import io.reactivex.Single;
 import io.reactivex.annotations.NonNull;
 
 import java.io.*;
@@ -34,16 +35,19 @@ public interface Store {
     @NonNull
     InputStream input() throws Exception;
 
-    boolean exists();
+    Single<Boolean> exists();
 
-    boolean createNew() throws Exception;
+    Single<Boolean> createNew() throws Exception;
 
-    boolean delete() throws Exception;
+    Single<Boolean> delete() throws Exception;
 
-    <T> void converterWrite(T value, Converter converter, Type type)
-            throws Exception;
+    <T> Single<T> converterWrite(T value, Converter converter, Type type) throws Exception;
 
-    void runInReadLock(ThrowingRunnable runnable);
+    void startRead();
 
-    void runInWriteLock(ThrowingRunnable runnable);
+    void endRead();
+
+    void startWrite();
+
+    void endWrite();
 }

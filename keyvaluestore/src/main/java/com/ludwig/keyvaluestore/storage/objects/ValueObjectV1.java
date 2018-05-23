@@ -27,6 +27,7 @@ import io.reactivex.subjects.PublishSubject;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Objects;
 
 public class ValueObjectV1 implements ValueObject {
     protected final PublishSubject updateSubject = PublishSubject.create();
@@ -41,62 +42,56 @@ public class ValueObjectV1 implements ValueObject {
     @Override
     @NonNull
     public <T> Maybe<T> get(Converter converter, Type type) {
-        return Maybe.create(emitter -> store.runInWriteLock(
-                () -> {
-                    if (!store.exists()) {
-                        emitter.onComplete();
-                        return;
-                    }
-
-                    T value = converter.read(store, type);
-                    if (value == null) {
-                        emitter.onComplete();
-                    }
-                    emitter.onSuccess(value);
-                }));
+        return Completable.fromAction(() -> store.startRead())
+                .andThen(store.exists())
+                .filter(Boolean::booleanValue)
+                .map(exists -> converter.<T>read(store, type))
+                .filter(Objects::nonNull)
+                .doFinally(() -> store.endRead());
     }
 
     @Override
     @NonNull
     @SuppressWarnings("unchecked")
     public <T> Single<T> put(Converter converter, Type type, T value) {
-        return Single.create(emitter -> store.runInWriteLock(
-                () -> {
-                    if (!store.exists() && !store.createNew()) {
-                        throw new IOException("Could not create file for store.");
+        return Completable.fromAction(() -> store.startWrite())
+                .andThen(store.exists())
+                .flatMap(exists -> exists ? Single.just(true) : store.createNew())
+                .flatMap(createSuccess -> {
+                    if (!createSuccess) {
+                        throw new IOException("Could not create store.");
                     }
-
-                    store.converterWrite(value, converter, type);
-                    emitter.onSuccess(value);
-                    updateSubject.onNext(new ValueUpdate<T>(value));
-                }));
+                    return store.converterWrite(value, converter, type);
+                })
+                .doOnSuccess(o -> updateSubject.onNext(new ValueUpdate<>(value)))
+                .doFinally(() -> store.endWrite());
     }
 
     @Override
     @NonNull
     @SuppressWarnings("unchecked")
     public <T> Observable<ValueUpdate<T>> observe(Converter converter, Type type) {
-        Observable<ValueUpdate<T>> startingValue = get(converter, type)
-                .map(value -> new ValueUpdate<T>((T) value))
-                .defaultIfEmpty(ValueUpdate.<T>empty())
-                .toObservable();
-
-        return updateSubject.startWith(startingValue).hide();
+        return updateSubject.startWith(get(converter, type)
+                .map(value -> new ValueUpdate<>((T) value))
+                .defaultIfEmpty(ValueUpdate.empty())
+                .toObservable()).hide();
     }
 
     @Override
     @NonNull
     @SuppressWarnings("unchecked")
     public <T> Completable clear() {
-        return Completable.create(emitter -> store.runInWriteLock(
-                () -> {
-                    if (store.exists() && !store.delete()) {
+        return Completable.fromAction(() -> store.startWrite())
+                .andThen(store.exists())
+                .filter(Boolean::booleanValue)
+                .flatMapSingle(exists -> store.delete())
+                .doOnSuccess(deleteSuccess -> {
+                    if (!deleteSuccess) {
                         throw new IOException("Clear operation on store failed.");
-                    } else {
-                        emitter.onComplete();
                     }
-
                     updateSubject.onNext(ValueUpdate.<T>empty());
-                }));
+                })
+                .doFinally(() -> store.endWrite())
+                .toCompletable();
     }
 }
