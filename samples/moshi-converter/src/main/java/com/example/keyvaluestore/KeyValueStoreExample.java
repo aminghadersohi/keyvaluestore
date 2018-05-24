@@ -82,12 +82,45 @@ public class KeyValueStoreExample {
                 });
 
         valueStore.observePut("value1").blockingGet();
-        listStore.observeAdd("listvalue1").blockingGet();
-        listStore.observeAdd("listvalue2").blockingGet();
-        listStore.observeAdd("listvalue3").blockingGet();
         valueStore.observePut("value2").blockingGet();
-        listStore.observeRemove(value -> value.equals("listvalue1")).blockingGet();
-        listStore.observeClear().blockingGet();
-        valueStore.observeClear().blockingGet();
+
+        Runnable runnable = () -> {
+            listStore.observeClear().blockingGet();
+            for (int i = 0; i < 1000; i++) {
+                final int _i = i;
+                if (Math.random() <= 0.01) {
+                    listStore.observeAdd("listvalue"+i).blockingGet();
+                } else {
+                    listStore.observeRemove(value -> value.equals("listvalue"+_i)).blockingGet();
+                }
+            }
+        };
+
+        Runnable runnable2 = () -> {
+            listStore.observeClear().blockingGet();
+            for (int i = 0; i < 1000; i++) {
+                final int _i = i;
+                if (Math.random() <= 0.01) {
+                    listStore.observeAdd("listvalue"+i).blockingGet();
+                } else {
+                    listStore.observeRemove(value -> value.equals("listvalue"+_i)).blockingGet();
+                }
+            }
+        };
+
+        Thread t = new Thread(runnable);
+        t.start();
+        Thread t2 = new Thread((runnable2));
+        t2.start();
+        try {
+            t.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        try {
+            t2.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

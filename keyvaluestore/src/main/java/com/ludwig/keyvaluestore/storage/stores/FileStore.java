@@ -17,7 +17,7 @@ package com.ludwig.keyvaluestore.storage.stores;
 
 import com.ludwig.keyvaluestore.Converter;
 import com.ludwig.keyvaluestore.storage.Store;
-import com.ludwig.keyvaluestore.storage.ThrowingRunnable;
+import io.reactivex.Single;
 import io.reactivex.annotations.NonNull;
 
 import java.io.*;
@@ -28,6 +28,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class FileStore implements Store {
     protected final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     @NonNull private File file;
+    private Integer readCount;
 
     FileStore(@NonNull File file) {
         this.file = file;
@@ -56,49 +57,54 @@ public class FileStore implements Store {
     }
 
     @Override
-    public boolean exists() {
-        return this.file.exists();
+    public Single<Boolean> exists() {
+        return Single.fromCallable(() -> FileStore.this.file.exists());
     }
 
     @Override
-    public boolean createNew() throws IOException {
-        return this.file.createNewFile();
+    public Single<Boolean> createNew() {
+        return Single.fromCallable(() -> FileStore.this.file.createNewFile());
     }
 
     @Override
-    public boolean delete() throws IOException {
-        return this.file.delete();
+    public Single<Boolean> delete() {
+        return Single.fromCallable(() -> FileStore.this.file.delete());
     }
 
     @Override
-    public <T> void converterWrite(T value, Converter converter, Type type)
-            throws IOException {
-        FileStore tmpFile = createTemp();
-        converter.write(value, type, tmpFile);
-
-        if (!delete() || !set(tmpFile)) {
-            throw new IOException("Failed to write get to file.");
-        }
+    public <T> Single<T> converterWrite(T value, Converter converter, Type type) {
+        return createTemp()
+                .map(tmpFile -> {
+                    converter.write(value, type, tmpFile);
+                    return tmpFile;
+                })
+                .flatMap(tmpFile -> delete().flatMap(deleted -> {
+                    if (!deleted) {
+                        throw new IOException("Failed to write get to store.");
+                    }
+                    return set(tmpFile).map(isSet -> {
+                        if (!isSet) {
+                            throw new IOException("Failed to write get to store.");
+                        }
+                        return value;
+                    });
+                }));
     }
 
     @Override
-    public void runInReadLock(ThrowingRunnable runnable) {
+    public void startRead() {
+        readWriteLock.readLock().lock();
+    }
+
+    @Override
+    public void endRead() {
+        readWriteLock.readLock().unlock();
+    }
+
+    @Override
+    public void startWrite() {
         Lock readLock = readWriteLock.readLock();
-        readLock.lock();
-
-        try {
-            runnable.run();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            readLock.unlock();
-        }
-    }
-
-    @Override
-    public void runInWriteLock(ThrowingRunnable runnable) {
-        Lock readLock = readWriteLock.readLock();
-        int readCount = readWriteLock.getWriteHoldCount() == 0 ? readWriteLock.getReadHoldCount() : 0;
+        readCount = readWriteLock.getWriteHoldCount() == 0 ? readWriteLock.getReadHoldCount() : 0;
 
         for (int i = 0; i < readCount; i++) {
             readLock.unlock();
@@ -106,25 +112,27 @@ public class FileStore implements Store {
 
         Lock writeLock = readWriteLock.writeLock();
         writeLock.lock();
+    }
 
-        try {
-            runnable.run();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            for (int i = 0; i < readCount; i++) {
-                readLock.lock();
-            }
-            writeLock.unlock();
+    @Override
+    public void endWrite() {
+        Lock readLock = readWriteLock.readLock();
+        Lock writeLock = readWriteLock.writeLock();
+
+        for (int i = 0; i < (readCount != null ? readCount : 0); i++) {
+            readLock.lock();
         }
+        readCount = null;
+        writeLock.unlock();
+
     }
 
-    private FileStore createTemp() {
-        return new FileStore(new File(this.file.getAbsolutePath() + ".tmp"));
+    private Single<FileStore> createTemp() {
+        return Single.fromCallable(() -> new FileStore(new File(this.file.getAbsolutePath() + ".tmp")));
     }
 
-    private boolean set(@NonNull FileStore storage) {
-        return storage.file.renameTo(this.file);
+    private Single<Boolean> set(@NonNull FileStore storage) {
+        return Single.fromCallable(() -> storage.file.renameTo(this.file));
     }
 
 }
