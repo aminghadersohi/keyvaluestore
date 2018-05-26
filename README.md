@@ -1,6 +1,7 @@
 KeyValueStore
 =======
 
+A reactive key value store that supports many storage types (singular and composite), and converters. 
 
 Details
 -------
