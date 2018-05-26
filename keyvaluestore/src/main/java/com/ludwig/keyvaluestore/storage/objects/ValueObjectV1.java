@@ -28,6 +28,7 @@ import io.reactivex.subjects.PublishSubject;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Objects;
+import java.util.Optional;
 
 public class ValueObjectV1 implements ValueObject {
     protected final PublishSubject updateSubject = PublishSubject.create();
@@ -42,19 +43,20 @@ public class ValueObjectV1 implements ValueObject {
     @Override
     @NonNull
     public <T> Maybe<T> get(Converter converter, Type type) {
-        return Completable.fromAction(() -> store.startRead())
+        return Completable.fromAction(store::startRead)
                 .andThen(store.exists())
                 .filter(Boolean::booleanValue)
-                .map(exists -> converter.<T>read(store, type))
-                .filter(Objects::nonNull)
-                .doFinally(() -> store.endRead());
+                .map(exists -> Optional.ofNullable(converter.<T>read(store, type)))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .doFinally(store::endRead);
     }
 
     @Override
     @NonNull
     @SuppressWarnings("unchecked")
     public <T> Single<T> put(Converter converter, Type type, T value) {
-        return Completable.fromAction(() -> store.startWrite())
+        return Completable.fromAction(store::startWrite)
                 .andThen(store.exists())
                 .flatMap(exists -> exists ? Single.just(true) : store.createNew())
                 .flatMap(createSuccess -> {
@@ -64,7 +66,7 @@ public class ValueObjectV1 implements ValueObject {
                     return store.converterWrite(value, converter, type);
                 })
                 .doOnSuccess(o -> updateSubject.onNext(new ValueUpdate<>(value)))
-                .doFinally(() -> store.endWrite());
+                .doFinally(store::endWrite);
     }
 
     @Override
@@ -81,7 +83,7 @@ public class ValueObjectV1 implements ValueObject {
     @NonNull
     @SuppressWarnings("unchecked")
     public <T> Completable clear() {
-        return Completable.fromAction(() -> store.startWrite())
+        return Completable.fromAction(store::startWrite)
                 .andThen(store.exists())
                 .filter(Boolean::booleanValue)
                 .flatMapSingle(exists -> store.delete())
@@ -91,7 +93,7 @@ public class ValueObjectV1 implements ValueObject {
                     }
                     updateSubject.onNext(ValueUpdate.<T>empty());
                 })
-                .doFinally(() -> store.endWrite())
-                .toCompletable();
+                .doFinally(store::endWrite)
+                .ignoreElement();
     }
 }

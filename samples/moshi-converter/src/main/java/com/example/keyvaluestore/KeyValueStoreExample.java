@@ -83,6 +83,14 @@ public class KeyValueStoreExample {
 
         valueStore.observePut("value1").blockingGet();
         valueStore.observePut("value2").blockingGet();
+        valueStore.observePut("value1").blockingGet();
+        listStore.observeAdd("listvalue1").blockingGet();
+        listStore.observeAdd("listvalue2").blockingGet();
+        listStore.observeAdd("listvalue3").blockingGet();
+        valueStore.observePut("value2").blockingGet();
+        listStore.observeRemove(value -> value.equals("listvalue1")).blockingGet();
+        listStore.observeClear().blockingGet();
+        valueStore.observeClear().blockingGet();
 
         Runnable runnable = () -> {
             listStore.observeClear().blockingGet();

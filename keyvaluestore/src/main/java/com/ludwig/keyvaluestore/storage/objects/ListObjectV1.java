@@ -43,8 +43,9 @@ public class ListObjectV1 implements ListObject {
         return Completable.fromAction(() -> store.startRead())
                 .andThen(store.exists())
                 .filter(Boolean::booleanValue)
-                .map(exists -> converter.<List<T>>read(store, type))
-                .filter(Objects::nonNull)
+                .map(exists -> Optional.ofNullable(converter.<List<T>>read(store, type)))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .toSingle(Collections.emptyList())
                 .doFinally(() -> store.endRead());
     }
@@ -95,25 +96,27 @@ public class ListObjectV1 implements ListObject {
     @Override
     @SuppressWarnings("unchecked")
     public <T> Single<List<T>> append(T value, Converter converter, Type type) {
-        return Completable.fromAction(() -> store.startWrite())
+        return Completable
+                .fromAction(store::startWrite)
                 .andThen(store.exists())
                 .flatMap(exists -> exists ? Single.just(true) : store.createNew())
                 .map(success -> {
                     if (!success) {
                         throw new IOException("Could not create store.");
                     }
-                    return converter.<List<T>>read(store, type);
+                    return Optional.ofNullable(converter.<List<T>>read(store, type));
                 })
-                .filter(Objects::nonNull)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .toSingle(Collections.emptyList())
                 .flatMap(originalList -> {
-                    List<T> result = new ArrayList<T>(originalList.size() + 1);
+                    List<T> result = new ArrayList<>(originalList.size() + 1);
                     result.addAll(originalList);
                     result.add(value);
                     return store.converterWrite(result, converter, type);
                 })
                 .doOnSuccess(updateSubject::onNext)
-                .doFinally(() -> store.endWrite());
+                .doFinally(store::endWrite);
     }
 
     @NonNull

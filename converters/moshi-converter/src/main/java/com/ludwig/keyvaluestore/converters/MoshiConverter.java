@@ -5,6 +5,7 @@ import com.ludwig.keyvaluestore.ConverterException;
 import com.ludwig.keyvaluestore.storage.Store;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
+import io.reactivex.annotations.Nullable;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
