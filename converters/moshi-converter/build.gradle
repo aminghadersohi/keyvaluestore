@@ -43,7 +43,7 @@ dependencies {
     apt rootProject.ext.nullAway
 
     compile project(':keyvaluestore')
-    compileOnly rootProject.ext.moshi
+    compile rootProject.ext.moshi
 
     errorprone rootProject.errorProne
     errorprone rootProject.checkerFramework

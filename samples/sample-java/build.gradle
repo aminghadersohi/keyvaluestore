@@ -36,11 +36,12 @@ targetCompatibility = 1.8
 
 dependencies {
     apt rootProject.ext.nullAway
-    
-    compileOnly rootProject.ext.moshi
 
-    compileOnly project(':keyvaluestore')
-    compileOnly project(':converters:moshi-converter')
+    errorprone rootProject.errorProne
+    errorprone rootProject.checkerFramework
+
+    compile project(':keyvaluestore')
+    compile project(':converters:moshi-converter')
 }
 
 
