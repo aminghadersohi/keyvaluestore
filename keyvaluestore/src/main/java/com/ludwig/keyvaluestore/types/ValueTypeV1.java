@@ -18,7 +18,7 @@ package com.ludwig.keyvaluestore.types;
 import com.ludwig.keyvaluestore.Converter;
 import com.ludwig.keyvaluestore.storage.storable.ValueStorable;
 import io.reactivex.*;
-import io.reactivex.annotations.NonNull;
+
 import io.reactivex.annotations.Nullable;
 import io.reactivex.schedulers.Schedulers;
 
@@ -29,14 +29,14 @@ final class ValueTypeV1<T> implements ValueType<T> {
     private final Type type;
     private ValueStorable storage;
 
-    ValueTypeV1(@NonNull ValueStorable storage, @NonNull Converter converter, @NonNull Type type) {
+    ValueTypeV1(ValueStorable storage, Converter converter, Type type) {
         this.storage = storage;
         this.converter = converter;
         this.type = type;
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
     public Maybe<T> get() {
         return storage.<T>get(converter, type);
@@ -49,31 +49,31 @@ final class ValueTypeV1<T> implements ValueType<T> {
     }
 
     @Override
-    public void put(@NonNull T value) {
+    public void put(T value) {
         put(value, Schedulers.io());
     }
 
     @Override
-    public void put(@NonNull T value, @NonNull Scheduler scheduler) {
+    public void put(T value, Scheduler scheduler) {
         observePut(value).subscribeOn(scheduler).subscribe();
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
-    public Single<T> observePut(@NonNull final T value) {
+    public Single<T> observePut(final T value) {
         return storage.put(converter, type, value);
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
     public Observable<ValueUpdate<T>> observe() {
         return storage.observe(converter, type);
     }
 
     @Override
-    @NonNull
+
     public Completable observeClear() {
         return storage.clear();
     }
@@ -84,7 +84,7 @@ final class ValueTypeV1<T> implements ValueType<T> {
     }
 
     @Override
-    public void clear(@NonNull Scheduler scheduler) {
+    public void clear(Scheduler scheduler) {
         observeClear().subscribeOn(scheduler).subscribe();
     }
 }

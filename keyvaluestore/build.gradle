@@ -31,9 +31,9 @@ plugins {
     id 'com.jfrog.bintray' version '1.6'
     id 'net.ltgt.apt' version '0.13'
     id 'net.ltgt.errorprone' version '0.0.13'
-    id 'java'
     id "org.jetbrains.kotlin.jvm" version "1.2.41"
     id 'maven-publish'
+    id 'java'
 }
 
 sourceCompatibility = 1.8
@@ -45,18 +45,13 @@ dependencies {
     compile rootProject.ext.rxJava
 
     errorprone rootProject.errorProne
+    errorprone rootProject.checkerFramework
 
     testCompile rootProject.ext.junit
     testCompile rootProject.ext.truth
     testCompile rootProject.ext.kotlinStdlib
 }
 
-tasks.withType(JavaCompile) {
-    // remove the if condition if you want to run NullAway on test code
-    if (!name.toLowerCase().contains("test")) {
-        options.compilerArgs += ["-Xep:NullAway:ERROR", "-XepOpt:NullAway:AnnotatedPackages=com.ludwig"]
-    }
-}
 task javadocJar(type: Jar) {
     classifier = 'javadoc'
     from javadoc
@@ -128,5 +123,12 @@ bintray {
         websiteUrl = PROJECT_URL
         issueTrackerUrl = ISSUE_TRACKER_URL
         vcsUrl = PROJECT_URL
+    }
+}
+
+tasks.withType(JavaCompile) {
+    // remove the if condition if you want to run NullAway on test code
+    if (!name.toLowerCase().contains("test")) {
+        options.compilerArgs += ["-Xep:NullAway:ERROR", "-XepOpt:NullAway:AnnotatedPackages=com.ludwig"]
     }
 }

@@ -26,7 +26,7 @@ public class MoshiConverter implements Converter {
     }
 
     @Override
-    public <T> void write(T data, Type type, Store store) throws ConverterException {
+    public <T> void write(@Nullable T data, Type type, Store store) throws ConverterException {
         try {
             OutputStream outputStream = store.output();
             JsonAdapter<T> adapter = moshi.adapter(type);
@@ -41,6 +41,7 @@ public class MoshiConverter implements Converter {
 
     @Override
     @Nullable
+    @SuppressWarnings("TypeParameterUnusedInFormals")
     public <T> T read(Store store, Type type) {
         try {
             InputStream inputStream = store.input();

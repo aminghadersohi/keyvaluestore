@@ -22,7 +22,7 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.annotations.NonNull;
+
 import io.reactivex.subjects.PublishSubject;
 
 import java.io.IOException;
@@ -32,14 +32,14 @@ import java.util.Optional;
 public class ValueStorableV1 implements ValueStorable {
     protected final PublishSubject updateSubject = PublishSubject.create();
 
-    @NonNull private Store store;
+    private Store store;
 
-    ValueStorableV1(@NonNull Store store) {
+    ValueStorableV1(Store store) {
         this.store = store;
     }
 
     @Override
-    @NonNull
+
     public <T> Maybe<T> get(Converter converter, Type type) {
         return Completable.fromAction(store::startRead)
                 .andThen(store.exists())
@@ -51,7 +51,7 @@ public class ValueStorableV1 implements ValueStorable {
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
     public <T> Single<T> put(Converter converter, Type type, T value) {
         return Completable.fromAction(store::startWrite)
@@ -68,7 +68,7 @@ public class ValueStorableV1 implements ValueStorable {
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
     public <T> Observable<ValueUpdate<T>> observe(Converter converter, Type type) {
         return updateSubject.startWith(get(converter, type)
@@ -78,7 +78,7 @@ public class ValueStorableV1 implements ValueStorable {
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
     public <T> Completable clear() {
         return Completable.fromAction(store::startWrite)

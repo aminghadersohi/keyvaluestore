@@ -17,13 +17,13 @@ package com.ludwig.keyvaluestore.storage;
 
 import com.ludwig.keyvaluestore.storage.storable.ListStorable;
 import com.ludwig.keyvaluestore.storage.storable.ValueStorable;
-import io.reactivex.annotations.NonNull;
+
 
 public interface StoreFactory {
 
-    @NonNull
-    ValueStorable valueStorage(@NonNull String key);
 
-    @NonNull
-    ListStorable listStorage(@NonNull String key);
+    ValueStorable valueStorage(String key);
+
+
+    ListStorable listStorage(String key);
 }

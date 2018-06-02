@@ -28,6 +28,7 @@ import io.reactivex.disposables.Disposable;
 import java.util.List;
 
 public class KeyValueStoreExample {
+    @SuppressWarnings({"CheckReturnValue", "CatchAndPrintStackTrace"})
     public static void main(String[] args) {
         KeyValueStore store = KeyValueStoreFactory.build(new FileStoreFactory("/tmp"), new MoshiConverter());
         ValueType<String> valueStore = store.value("value", String.class);
@@ -60,7 +61,6 @@ public class KeyValueStoreExample {
         listStore.observe()
                 .skip(1)
                 .subscribe(new Observer<List<String>>() {
-
                     @Override
                     public void onSubscribe(Disposable d) {
 

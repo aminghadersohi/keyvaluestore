@@ -16,11 +16,11 @@
 package com.ludwig.keyvaluestore;
 
 import com.ludwig.keyvaluestore.storage.StoreFactory;
-import io.reactivex.annotations.NonNull;
+
 
 public final class KeyValueStoreFactory {
-    @NonNull
-    public static KeyValueStore build(@NonNull StoreFactory storeFactory, @NonNull Converter converter) {
+
+    public static KeyValueStore build(StoreFactory storeFactory, Converter converter) {
         return new KeyValueStoreV1(storeFactory, converter);
     }
 }

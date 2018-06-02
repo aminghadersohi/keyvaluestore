@@ -47,7 +47,8 @@ public final class ValueUpdate<T> {
 
         ValueUpdate other = (ValueUpdate) obj;
         if (this.empty) return other.empty;
-        return this.value.equals(other.value);
+        return this.value == other.value
+                || (this.value != null && other.value != null && this.value.equals(other.value));
     }
 
     @Override

@@ -19,26 +19,26 @@ import com.ludwig.keyvaluestore.storage.*;
 import com.ludwig.keyvaluestore.storage.storable.ListStorable;
 import com.ludwig.keyvaluestore.storage.storable.StorableFactory;
 import com.ludwig.keyvaluestore.storage.storable.ValueStorable;
-import io.reactivex.annotations.NonNull;
+
 
 import java.io.File;
 
 public class FileStoreFactory implements StoreFactory {
 
-    @NonNull
+
     private final String basePath;
 
-    public FileStoreFactory(@NonNull String basePath) {
+    public FileStoreFactory(String basePath) {
         this.basePath = basePath;
     }
 
-    @NonNull
+
     @Override
-    public ValueStorable valueStorage(@NonNull String key) {
+    public ValueStorable valueStorage(String key) {
         return StorableFactory.value(new FileStore(new File(basePath + "/" + key + ".json")));
     }
 
-    @NonNull
+
     @Override
     public ListStorable listStorage(String key) {
         return StorableFactory.list(new FileStore(new File(basePath + "/" + key + ".json")));

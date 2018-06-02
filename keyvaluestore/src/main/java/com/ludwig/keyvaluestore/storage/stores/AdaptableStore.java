@@ -19,11 +19,13 @@ import com.ludwig.keyvaluestore.Converter;
 import com.ludwig.keyvaluestore.storage.Store;
 import com.ludwig.keyvaluestore.storage.StoreAdapter;
 import io.reactivex.Single;
-import io.reactivex.annotations.NonNull;
+
 import io.reactivex.annotations.Nullable;
 
 import java.io.*;
 import java.lang.reflect.Type;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class AdaptableStore implements Store {
     private final String key;
@@ -41,7 +43,7 @@ public class AdaptableStore implements Store {
             private final Object closeLock = new Object();
 
             @Override
-            public int read(@NonNull char[] b, int off, int len) {
+            public int read(char[] b, int off, int len) {
                 if (buffer == null) {
                     buffer = storeAdapter.read(key).blockingGet();
                 }
@@ -112,10 +114,10 @@ public class AdaptableStore implements Store {
         return new Writer() {
             private final Object closeLock = new Object();
             private volatile boolean closed = false;
-            private StringBuffer buffer = new StringBuffer();
+            private StringBuilder buffer = new StringBuilder();
 
             @Override
-            public void write(@NonNull char[] b, int off, int len) {
+            public void write(char[] b, int off, int len) {
                 buffer.append(new String(b, off, len));
             }
 
@@ -131,7 +133,7 @@ public class AdaptableStore implements Store {
                         return;
                     }
                     closed = true;
-                    buffer = new StringBuffer();
+                    buffer = new StringBuilder();
                 }
             }
         };
@@ -142,7 +144,7 @@ public class AdaptableStore implements Store {
         return new OutputStream() {
             private final Object closeLock = new Object();
             private volatile boolean closed = false;
-            StringBuffer buffer = new StringBuffer();
+            StringBuilder buffer = new StringBuilder();
 
             @Override
             public void write(int b) throws IOException {
@@ -154,7 +156,7 @@ public class AdaptableStore implements Store {
                 if (closed && len > 0) {
                     throw new IOException("Stream Closed");
                 }
-                buffer.append(new String(b, off, len));
+                buffer.append(new String(b, off, len, UTF_8));
             }
 
             @Override
@@ -165,7 +167,7 @@ public class AdaptableStore implements Store {
                     }
                     storeAdapter.write(key, buffer.toString()).blockingAwait();
                     closed = true;
-                    buffer = new StringBuffer();
+                    buffer = new StringBuilder();
                 }
             }
 

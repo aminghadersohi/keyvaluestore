@@ -18,7 +18,7 @@ package com.ludwig.keyvaluestore.storage.stores;
 import com.ludwig.keyvaluestore.Converter;
 import com.ludwig.keyvaluestore.storage.Store;
 import io.reactivex.Single;
-import io.reactivex.annotations.NonNull;
+import io.reactivex.annotations.Nullable;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -27,21 +27,21 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class FileStore implements Store {
     protected final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-    @NonNull private File file;
-    private Integer readCount;
+    private final File file;
+    @Nullable private Integer readCount;
 
-    FileStore(@NonNull File file) {
+    FileStore( File file) {
         this.file = file;
     }
 
     @Override
-    @NonNull
+    @SuppressWarnings("DefaultCharset")
     public Writer writer() throws IOException {
         return new FileWriter(this.file);
     }
 
     @Override
-    @NonNull
+    @SuppressWarnings("DefaultCharset")
     public Reader reader() throws IOException {
         return new FileReader(this.file);
     }
@@ -131,7 +131,7 @@ public class FileStore implements Store {
         return Single.fromCallable(() -> new FileStore(new File(this.file.getAbsolutePath() + ".tmp")));
     }
 
-    private Single<Boolean> set(@NonNull FileStore storage) {
+    private Single<Boolean> set( FileStore storage) {
         return Single.fromCallable(() -> storage.file.renameTo(this.file));
     }
 

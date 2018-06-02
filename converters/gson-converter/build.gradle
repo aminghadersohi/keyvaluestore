@@ -17,6 +17,9 @@
 buildscript {
     repositories {
         jcenter()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
     }
 
     dependencies {
@@ -26,26 +29,28 @@ buildscript {
 
 plugins {
     id 'com.jfrog.bintray' version '1.6'
+    id 'net.ltgt.apt' version '0.13'
+    id 'net.ltgt.errorprone' version '0.0.13'
+    id "org.jetbrains.kotlin.jvm" version "1.2.41"
+    id 'maven-publish'
+    id 'java'
 }
-
-apply plugin: 'java-library'
-apply plugin: 'kotlin'
-apply plugin: 'maven-publish'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-repositories {
-    jcenter()
-}
-
 dependencies {
-    implementation project(':keyvaluestore')
-    api rootProject.ext.gson
+    apt rootProject.ext.nullAway
 
-    testImplementation rootProject.ext.junit
-    testImplementation rootProject.ext.truth
-    testImplementation rootProject.ext.kotlinStdlib
+    compile project(':keyvaluestore')
+    compileOnly rootProject.ext.gson
+
+    errorprone rootProject.errorProne
+    errorprone rootProject.checkerFramework
+
+    testCompile rootProject.ext.junit
+    testCompile rootProject.ext.truth
+    testCompile rootProject.ext.kotlinStdlib
 }
 
 task javadocJar(type: Jar) {
@@ -119,5 +124,12 @@ bintray {
         websiteUrl = PROJECT_URL
         issueTrackerUrl = ISSUE_TRACKER_URL
         vcsUrl = PROJECT_URL
+    }
+}
+
+tasks.withType(JavaCompile) {
+    // remove the if condition if you want to run NullAway on test code
+    if (!name.toLowerCase().contains("test")) {
+        options.compilerArgs += ["-Xep:NullAway:ERROR", "-XepOpt:NullAway:AnnotatedPackages=com.ludwig"]
     }
 }

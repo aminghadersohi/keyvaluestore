@@ -20,7 +20,8 @@ import com.ludwig.keyvaluestore.storage.storable.ListStorable;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import io.reactivex.Single;
-import io.reactivex.annotations.NonNull;
+
+import io.reactivex.annotations.Nullable;
 import io.reactivex.schedulers.Schedulers;
 
 import java.lang.reflect.ParameterizedType;
@@ -36,51 +37,51 @@ final class ListTypeV1<T> implements ListType<T> {
     private final Converter converter;
     private final Type type;
 
-    ListTypeV1(@NonNull ListStorable storage, @NonNull Converter converter, @NonNull Type type) {
+    ListTypeV1(ListStorable storage, Converter converter, Type type) {
         this.storage = storage;
         this.converter = converter;
         this.type = new ListTypeWrapper(type);
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
     public Single<List<T>> get() {
         return storage.get(converter, type);
     }
 
     @Override
-    @NonNull
+
     public List<T> blockingGet() {
         return get().blockingGet();
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
-    public Single<List<T>> observePut(@NonNull final List<T> list) {
+    public Single<List<T>> observePut(final List<T> list) {
         return storage.put(converter, type, list);
     }
 
     @Override
-    public void put(@NonNull List<T> list) {
+    public void put(List<T> list) {
         put(list, Schedulers.io());
     }
 
     @Override
-    public void put(@NonNull List<T> list, @NonNull Scheduler scheduler) {
+    public void put(List<T> list, Scheduler scheduler) {
         observePut(list).subscribeOn(scheduler).subscribe();
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
     public Observable<List<T>> observe() {
         return storage.observe(converter, type);
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
     public Single<List<T>> observeClear() {
         return storage.clear();
@@ -92,71 +93,71 @@ final class ListTypeV1<T> implements ListType<T> {
     }
 
     @Override
-    public void clear(@NonNull Scheduler scheduler) {
+    public void clear(Scheduler scheduler) {
         observeClear().subscribeOn(scheduler).subscribe();
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
-    public Single<List<T>> observeAdd(@NonNull final T value) {
+    public Single<List<T>> observeAdd(final T value) {
         return storage.append(value, converter, type);
 
     }
 
     @Override
-    public void add(@NonNull T value) {
+    public void add(T value) {
         add(value, Schedulers.io());
     }
 
     @Override
-    public void add(@NonNull T value, @NonNull Scheduler scheduler) {
+    public void add(T value, Scheduler scheduler) {
         observeAdd(value).subscribeOn(scheduler).subscribe();
     }
 
     @Override
-    public Single<List<T>> observeRemoveAll(@NonNull PredicateFunc<T> predicateFunc) {
+    public Single<List<T>> observeRemoveAll(PredicateFunc<T> predicateFunc) {
         return storage.removeAll(predicateFunc, converter, type);
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
     public Single<List<T>> observeRemove(
-            @NonNull final PredicateFunc<T> predicateFunc) {
+            final PredicateFunc<T> predicateFunc) {
         return storage.remove(predicateFunc, converter, type);
     }
 
     @Override
-    public void remove(@NonNull PredicateFunc<T> predicateFunc) {
+    public void remove(PredicateFunc<T> predicateFunc) {
         remove(Schedulers.io(), predicateFunc);
     }
 
 
     @Override
-    public void remove(@NonNull Scheduler scheduler,
-                       @NonNull PredicateFunc<T> predicateFunc) {
+    public void remove(Scheduler scheduler,
+                       PredicateFunc<T> predicateFunc) {
         observeRemove(predicateFunc).subscribeOn(scheduler).subscribe();
     }
 
     @Override
-    @NonNull
-    public Single<List<T>> observeRemove(@NonNull final T value) {
+
+    public Single<List<T>> observeRemove(final T value) {
         return observeRemove(valueToRemove -> value.equals(valueToRemove));
     }
 
     @Override
-    public void remove(@NonNull final T value) {
+    public void remove(final T value) {
         remove(value, Schedulers.io());
     }
 
     @Override
-    public void remove(@NonNull final T value, @NonNull Scheduler scheduler) {
+    public void remove(final T value, Scheduler scheduler) {
         observeRemove(value).subscribeOn(scheduler).subscribe();
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
     public Single<List<T>> observeRemove(final int position) {
         return storage.remove(position, converter, type);
@@ -168,46 +169,46 @@ final class ListTypeV1<T> implements ListType<T> {
     }
 
     @Override
-    public void remove(int position, @NonNull Scheduler scheduler) {
+    public void remove(int position, Scheduler scheduler) {
         observeRemove(position).subscribeOn(scheduler).subscribe();
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
-    public Single<List<T>> observeReplace(@NonNull final T value,
-                                          @NonNull final PredicateFunc<T> predicateFunc) {
+    public Single<List<T>> observeReplace(final T value,
+                                          final PredicateFunc<T> predicateFunc) {
 
         return storage.replace(value, predicateFunc, converter, type);
     }
 
     @Override
-    public void replace(@NonNull T value, @NonNull PredicateFunc<T> predicateFunc) {
+    public void replace(T value, PredicateFunc<T> predicateFunc) {
         replace(value, Schedulers.io(), predicateFunc);
     }
 
     @Override
-    public void replace(@NonNull T value, @NonNull Scheduler scheduler,
-                        @NonNull PredicateFunc<T> predicateFunc) {
+    public void replace(T value, Scheduler scheduler,
+                        PredicateFunc<T> predicateFunc) {
         observeReplace(value, predicateFunc).subscribeOn(scheduler).subscribe();
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
-    public Single<List<T>> observeAddOrReplace(@NonNull final T value,
-                                               @NonNull final PredicateFunc<T> predicateFunc) {
+    public Single<List<T>> observeAddOrReplace(final T value,
+                                               final PredicateFunc<T> predicateFunc) {
         return storage.addOrReplace(value, predicateFunc, converter, type);
     }
 
     @Override
-    public void addOrReplace(@NonNull T value, @NonNull PredicateFunc<T> predicateFunc) {
+    public void addOrReplace(T value, PredicateFunc<T> predicateFunc) {
         addOrReplace(value, Schedulers.io(), predicateFunc);
     }
 
     @Override
-    public void addOrReplace(@NonNull T value, @NonNull Scheduler scheduler,
-                             @NonNull PredicateFunc<T> predicateFunc) {
+    public void addOrReplace(T value, Scheduler scheduler,
+                             PredicateFunc<T> predicateFunc) {
         observeAddOrReplace(value, predicateFunc).subscribeOn(scheduler).subscribe();
     }
 
@@ -224,6 +225,7 @@ final class ListTypeV1<T> implements ListType<T> {
         }
 
         @Override
+        @Nullable
         public Type getOwnerType() {
             return null;
         }

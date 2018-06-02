@@ -17,22 +17,22 @@ package com.ludwig.keyvaluestore.storage;
 
 import com.ludwig.keyvaluestore.Converter;
 import io.reactivex.Single;
-import io.reactivex.annotations.NonNull;
+
 
 import java.io.*;
 import java.lang.reflect.Type;
 
 public interface Store {
-    @NonNull
+
     Reader reader() throws Exception;
 
-    @NonNull
+
     Writer writer() throws Exception;
 
-    @NonNull
+
     OutputStream output() throws Exception;
 
-    @NonNull
+
     InputStream input() throws Exception;
 
     Single<Boolean> exists();

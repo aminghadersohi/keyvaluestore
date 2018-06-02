@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ludwig.keyvaluestore.Converter;
 import com.ludwig.keyvaluestore.ConverterException;
 import com.ludwig.keyvaluestore.storage.Store;
+import io.reactivex.annotations.Nullable;
 
 import java.io.OutputStream;
 import java.io.Reader;
@@ -26,7 +27,7 @@ public class JacksonConverter implements Converter {
     }
 
     @Override
-    public <T> void write(T data, Type type, Store store) throws ConverterException {
+    public <T> void write(@Nullable T data, Type type, Store store) throws ConverterException {
         try {
             OutputStream outputStream = store.output();
             objectMapper.writeValue(outputStream, data);
@@ -37,6 +38,8 @@ public class JacksonConverter implements Converter {
     }
 
     @Override
+    @Nullable
+    @SuppressWarnings("TypeParameterUnusedInFormals")
     public <T> T read(Store store, Type type) throws ConverterException {
         JavaType javaType = objectMapper.getTypeFactory().constructType(type);
 

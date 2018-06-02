@@ -19,7 +19,7 @@ import com.ludwig.keyvaluestore.Converter;
 import com.ludwig.keyvaluestore.types.ListType;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.annotations.NonNull;
+
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -27,37 +27,37 @@ import java.util.List;
 public interface ListStorable {
     <T> Single<List<T>> get(Converter converter, Type type);
 
-    @NonNull
+
     <T> Single<List<T>> remove(
-            @NonNull ListType.PredicateFunc<T> predicateFunc,
+            ListType.PredicateFunc<T> predicateFunc,
             Converter converter,
             Type type);
 
-    @NonNull
+
     @SuppressWarnings("unchecked")
     <T> Single<List<T>> removeAll(
-            @NonNull ListType.PredicateFunc<T> predicateFunc,
+            ListType.PredicateFunc<T> predicateFunc,
             Converter converter, Type type);
 
-    @NonNull
+
     @SuppressWarnings("unchecked")
     <T> Single<List<T>> remove(int position, Converter converter, Type type);
 
-    @NonNull
+
     <T> Single<List<T>> put(Converter converter, Type type, List<T> list);
 
-    @NonNull
+
     <T> Observable<List<T>> observe(Converter converter, Type type);
 
-    @NonNull
+
     <T> Single<List<T>> clear();
 
-    @NonNull
+
     <T> Single<List<T>> append(T value, Converter converter, Type type);
 
-    @NonNull
+
     <T> Single<List<T>> replace(T value, ListType.PredicateFunc<T> predicateFunc, Converter converter, Type type);
 
-    @NonNull
+
     <T> Single<List<T>> addOrReplace(T value, ListType.PredicateFunc<T> predicateFunc, Converter converter, Type type);
 }

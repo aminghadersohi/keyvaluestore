@@ -16,7 +16,7 @@
 package com.ludwig.keyvaluestore;
 
 import com.ludwig.keyvaluestore.storage.Store;
-import io.reactivex.annotations.NonNull;
+
 import io.reactivex.annotations.Nullable;
 
 import java.lang.reflect.Type;
@@ -28,12 +28,13 @@ public interface Converter {
     /**
      * Convert data into a serializable format and write to writer.
      */
-    <T> void write(@Nullable T data, @NonNull Type type, @NonNull Store store)
+    <T> void write(@Nullable T data, Type type, Store store)
             throws ConverterException;
 
     /**
      * Pull typed data out of reader.
      */
     @Nullable
-    <T> T read(@NonNull Store store, @NonNull Type type) throws ConverterException;
+    @SuppressWarnings("TypeParameterUnusedInFormals")
+    <T> T read(Store store, Type type) throws ConverterException;
 }

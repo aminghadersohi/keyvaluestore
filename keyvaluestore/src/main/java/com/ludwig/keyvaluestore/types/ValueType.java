@@ -16,7 +16,7 @@
 package com.ludwig.keyvaluestore.types;
 
 import io.reactivex.*;
-import io.reactivex.annotations.NonNull;
+
 import io.reactivex.annotations.Nullable;
 import io.reactivex.schedulers.Schedulers;
 
@@ -28,7 +28,7 @@ public interface ValueType<T> {
      * Retrieve the current value from this store using Rx. If this store has not had a value written
      * then the returned {@link Maybe} completes without a value.
      */
-    @NonNull
+
     Maybe<T> get();
 
     /**
@@ -42,20 +42,20 @@ public interface ValueType<T> {
      * Write an object to this store and observe the operation. The value returned in the {@link
      * Single} is the value written to this store, making it useful for chaining.
      */
-    @NonNull
-    Single<T> observePut(@NonNull final T value);
+
+    Single<T> observePut(final T value);
 
     /**
      * Asynchronously write a value to this store. The write operation occurs on {@link
      * Schedulers#io()}. If you wish to specify the {@link Scheduler} then use {@link #put(Object,
      * Scheduler)}.
      */
-    void put(@NonNull T value);
+    void put(T value);
 
     /**
      * Write a value to this store on a specified {@link Scheduler}.
      */
-    void put(@NonNull T value, @NonNull Scheduler scheduler);
+    void put(T value, Scheduler scheduler);
 
     /**
      * Observe changes to the value in this store. {@code onNext(valueUpdate)} will be invoked
@@ -65,13 +65,13 @@ public interface ValueType<T> {
      * store to hold no current value. If that's the case {@link ValueUpdate#empty update.empty} will
      * be true and {@link ValueUpdate#value update.value} will be null.
      */
-    @NonNull
+
     Observable<ValueUpdate<T>> observe();
 
     /**
      * Clear the value in this store and observe the operation. (Useful for chaining).
      */
-    @NonNull
+
     Completable observeClear();
 
     /**
@@ -84,5 +84,5 @@ public interface ValueType<T> {
     /**
      * Clear the value from this store on a specified {@link Scheduler}.
      */
-    void clear(@NonNull Scheduler scheduler);
+    void clear(Scheduler scheduler);
 }

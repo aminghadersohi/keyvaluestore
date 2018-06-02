@@ -8,6 +8,7 @@ Details
 
 Usage
 -----
+* https://plugins.jetbrains.com/plugin/7349-error-prone-compiler-integration
 
 License
 --------

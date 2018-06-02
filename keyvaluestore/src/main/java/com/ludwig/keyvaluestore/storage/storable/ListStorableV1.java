@@ -22,7 +22,7 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.annotations.NonNull;
+
 import io.reactivex.subjects.PublishSubject;
 
 import java.io.IOException;
@@ -31,9 +31,9 @@ import java.util.*;
 
 public class ListStorableV1 implements ListStorable {
     private final PublishSubject updateSubject = PublishSubject.create();
-    @NonNull private final Store store;
+    private final Store store;
 
-    ListStorableV1(@NonNull Store store) {
+    ListStorableV1(Store store) {
         this.store = store;
     }
 
@@ -49,7 +49,7 @@ public class ListStorableV1 implements ListStorable {
                 .doFinally(store::endRead);
     }
 
-    @NonNull
+
     @Override
     @SuppressWarnings("unchecked")
     public <T> Single<List<T>> put(Converter converter, Type type, List<T> list) {
@@ -66,14 +66,14 @@ public class ListStorableV1 implements ListStorable {
                 .doFinally(store::endWrite);
     }
 
-    @NonNull
+
     @Override
     @SuppressWarnings("unchecked")
     public <T> Observable<List<T>> observe(Converter converter, Type type) {
         return updateSubject.startWith(get(converter, type).toObservable()).hide();
     }
 
-    @NonNull
+
     @Override
     @SuppressWarnings("unchecked")
     public <T> Single<List<T>> clear() {
@@ -91,7 +91,7 @@ public class ListStorableV1 implements ListStorable {
                 .doFinally(store::endWrite);
     }
 
-    @NonNull
+
     @Override
     @SuppressWarnings("unchecked")
     public <T> Single<List<T>> append(T value, Converter converter, Type type) {
@@ -118,7 +118,7 @@ public class ListStorableV1 implements ListStorable {
                 .doFinally(store::endWrite);
     }
 
-    @NonNull
+
     @Override
     @SuppressWarnings("unchecked")
     public <T> Single<List<T>> replace(
@@ -155,7 +155,7 @@ public class ListStorableV1 implements ListStorable {
                 .doFinally(store::endWrite);
     }
 
-    @NonNull
+
     @Override
     @SuppressWarnings("unchecked")
     public <T> Single<List<T>> addOrReplace(
@@ -202,10 +202,10 @@ public class ListStorableV1 implements ListStorable {
 
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
     public <T> Single<List<T>> remove(
-            @NonNull final ListType.PredicateFunc<T> predicateFunc,
+            final ListType.PredicateFunc<T> predicateFunc,
             Converter converter, Type type) {
         return Completable.fromAction(store::startWrite)
                 .andThen(store.exists())
@@ -238,10 +238,10 @@ public class ListStorableV1 implements ListStorable {
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
     public <T> Single<List<T>> removeAll(
-            @NonNull final ListType.PredicateFunc<T> predicateFunc,
+            final ListType.PredicateFunc<T> predicateFunc,
             Converter converter, Type type) {
 
         return Completable.fromAction(store::startWrite)
@@ -274,7 +274,7 @@ public class ListStorableV1 implements ListStorable {
     }
 
     @Override
-    @NonNull
+
     @SuppressWarnings("unchecked")
     public <T> Single<List<T>> remove(int position, Converter converter, Type type) {
         return Completable.fromAction(store::startWrite)

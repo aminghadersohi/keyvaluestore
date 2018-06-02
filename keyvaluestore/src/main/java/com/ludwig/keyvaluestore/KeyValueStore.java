@@ -17,15 +17,15 @@ package com.ludwig.keyvaluestore;
 
 import com.ludwig.keyvaluestore.types.ListType;
 import com.ludwig.keyvaluestore.types.ValueType;
-import io.reactivex.annotations.NonNull;
+
 
 import java.lang.reflect.Type;
 
 public interface KeyValueStore {
 
-    @NonNull
-    <T> ListType<T> list(@NonNull String key, @NonNull Type type);
 
-    @NonNull
-    <T> ValueType<T> value(@NonNull String key, @NonNull Type type);
+    <T> ListType<T> list(String key, Type type);
+
+
+    <T> ValueType<T> value(String key, Type type);
 }
