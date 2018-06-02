@@ -16,7 +16,7 @@
 package com.ludwig.keyvaluestore.types;
 
 import com.ludwig.keyvaluestore.Converter;
-import com.ludwig.keyvaluestore.storage.objects.ListObject;
+import com.ludwig.keyvaluestore.storage.storable.ListStorable;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import io.reactivex.Single;
@@ -32,11 +32,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 final class ListTypeV1<T> implements ListType<T> {
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
-    private final ListObject storage;
+    private final ListStorable storage;
     private final Converter converter;
     private final Type type;
 
-    ListTypeV1(@NonNull ListObject storage, @NonNull Converter converter, @NonNull Type type) {
+    ListTypeV1(@NonNull ListStorable storage, @NonNull Converter converter, @NonNull Type type) {
         this.storage = storage;
         this.converter = converter;
         this.type = new ListTypeWrapper(type);

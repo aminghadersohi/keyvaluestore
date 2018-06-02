@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ludwig.keyvaluestore.storage.objects;
+package com.ludwig.keyvaluestore.storage.storable;
 
 import com.ludwig.keyvaluestore.Converter;
 import com.ludwig.keyvaluestore.storage.Store;
@@ -29,32 +29,31 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
 
-public class ListObjectV1 implements ListObject {
+public class ListStorableV1 implements ListStorable {
     private final PublishSubject updateSubject = PublishSubject.create();
-    @NonNull
-    private Store store;
+    @NonNull private final Store store;
 
-    public ListObjectV1(@NonNull Store store) {
+    ListStorableV1(@NonNull Store store) {
         this.store = store;
     }
 
     @Override
     public <T> Single<List<T>> get(Converter converter, Type type) {
-        return Completable.fromAction(() -> store.startRead())
+        return Completable.fromAction(store::startRead)
                 .andThen(store.exists())
                 .filter(Boolean::booleanValue)
                 .map(exists -> Optional.ofNullable(converter.<List<T>>read(store, type)))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toSingle(Collections.emptyList())
-                .doFinally(() -> store.endRead());
+                .doFinally(store::endRead);
     }
 
     @NonNull
     @Override
     @SuppressWarnings("unchecked")
     public <T> Single<List<T>> put(Converter converter, Type type, List<T> list) {
-        return Completable.fromAction(() -> store.startWrite())
+        return Completable.fromAction(store::startWrite)
                 .andThen(store.exists())
                 .flatMap(exists -> exists ? Single.just(true) : store.createNew())
                 .flatMap(exists -> {
@@ -64,7 +63,7 @@ public class ListObjectV1 implements ListObject {
                     return store.converterWrite(list, converter, type);
                 })
                 .doOnSuccess(updateSubject::onNext)
-                .doFinally(() -> store.endWrite());
+                .doFinally(store::endWrite);
     }
 
     @NonNull
@@ -78,7 +77,7 @@ public class ListObjectV1 implements ListObject {
     @Override
     @SuppressWarnings("unchecked")
     public <T> Single<List<T>> clear() {
-        return Completable.fromAction(() -> store.startWrite())
+        return Completable.fromAction(store::startWrite)
                 .andThen(store.exists())
                 .flatMap(exists -> exists ? store.delete() : Single.just(true))
                 .map(success -> {
@@ -89,7 +88,7 @@ public class ListObjectV1 implements ListObject {
                     return Collections.<T>emptyList();
                 })
                 .doOnSuccess(o -> updateSubject.onNext(Collections.<T>emptyList()))
-                .doFinally(() -> store.endWrite());
+                .doFinally(store::endWrite);
     }
 
     @NonNull
@@ -127,7 +126,7 @@ public class ListObjectV1 implements ListObject {
             ListType.PredicateFunc<T> predicateFunc,
             Converter converter,
             Type type) {
-        return Completable.fromAction(() -> store.startWrite())
+        return Completable.fromAction(store::startWrite)
                 .andThen(store.exists())
                 .filter(Boolean::booleanValue)
                 .flatMap(exists -> {
@@ -153,7 +152,7 @@ public class ListObjectV1 implements ListObject {
                 })
                 .toSingle(Collections.<T>emptyList())
                 .doOnSuccess(updateSubject::onNext)
-                .doFinally(() -> store.endWrite());
+                .doFinally(store::endWrite);
     }
 
     @NonNull
@@ -163,7 +162,7 @@ public class ListObjectV1 implements ListObject {
             T value,
             ListType.PredicateFunc<T> predicateFunc,
             Converter converter, Type type) {
-        return Completable.fromAction(() -> store.startWrite())
+        return Completable.fromAction(store::startWrite)
                 .andThen(store.exists())
                 .flatMap(exists -> exists ? Single.just(true) : store.createNew())
                 .flatMap(createSuccess -> {
@@ -198,7 +197,7 @@ public class ListObjectV1 implements ListObject {
                     return store.converterWrite(modifiedList, converter, type);
                 })
                 .doOnSuccess(updateSubject::onNext)
-                .doFinally(() -> store.endWrite());
+                .doFinally(store::endWrite);
     }
 
 
@@ -208,7 +207,7 @@ public class ListObjectV1 implements ListObject {
     public <T> Single<List<T>> remove(
             @NonNull final ListType.PredicateFunc<T> predicateFunc,
             Converter converter, Type type) {
-        return Completable.fromAction(() -> store.startWrite())
+        return Completable.fromAction(store::startWrite)
                 .andThen(store.exists())
                 .filter(Boolean::booleanValue)
                 .flatMap(exists -> {
@@ -235,7 +234,7 @@ public class ListObjectV1 implements ListObject {
                 })
                 .toSingle(Collections.emptyList())
                 .doOnSuccess(updateSubject::onNext)
-                .doFinally(() -> store.endWrite());
+                .doFinally(store::endWrite);
     }
 
     @Override
@@ -245,7 +244,7 @@ public class ListObjectV1 implements ListObject {
             @NonNull final ListType.PredicateFunc<T> predicateFunc,
             Converter converter, Type type) {
 
-        return Completable.fromAction(() -> store.startWrite())
+        return Completable.fromAction(store::startWrite)
                 .andThen(store.exists())
                 .filter(Boolean::booleanValue)
                 .flatMap(exists -> {
@@ -271,14 +270,14 @@ public class ListObjectV1 implements ListObject {
                 })
                 .toSingle(Collections.emptyList())
                 .doOnSuccess(updateSubject::onNext)
-                .doFinally(() -> store.endWrite());
+                .doFinally(store::endWrite);
     }
 
     @Override
     @NonNull
     @SuppressWarnings("unchecked")
     public <T> Single<List<T>> remove(int position, Converter converter, Type type) {
-        return Completable.fromAction(() -> store.startWrite())
+        return Completable.fromAction(store::startWrite)
                 .andThen(store.exists())
                 .filter(Boolean::booleanValue)
                 .flatMap(exists -> {
@@ -292,6 +291,6 @@ public class ListObjectV1 implements ListObject {
                 })
                 .toSingle(Collections.emptyList())
                 .doOnSuccess(updateSubject::onNext)
-                .doFinally(() -> store.endWrite());
+                .doFinally(store::endWrite);
     }
 }

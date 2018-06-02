@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ludwig.keyvaluestore.storage.objects;
+package com.ludwig.keyvaluestore.storage.storable;
 
 import com.ludwig.keyvaluestore.Converter;
 import com.ludwig.keyvaluestore.types.ValueUpdate;
@@ -25,7 +25,7 @@ import io.reactivex.annotations.NonNull;
 
 import java.lang.reflect.Type;
 
-public interface ValueObject {
+public interface ValueStorable {
 
     @NonNull
     <T> Maybe<T> get(Converter converter, Type type);

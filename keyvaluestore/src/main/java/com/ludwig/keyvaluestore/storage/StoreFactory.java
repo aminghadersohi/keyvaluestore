@@ -15,15 +15,15 @@
  */
 package com.ludwig.keyvaluestore.storage;
 
-import com.ludwig.keyvaluestore.storage.objects.ListObject;
-import com.ludwig.keyvaluestore.storage.objects.ValueObject;
+import com.ludwig.keyvaluestore.storage.storable.ListStorable;
+import com.ludwig.keyvaluestore.storage.storable.ValueStorable;
 import io.reactivex.annotations.NonNull;
 
-public interface StoreManager {
+public interface StoreFactory {
 
     @NonNull
-    ValueObject valueStorage(@NonNull String key);
+    ValueStorable valueStorage(@NonNull String key);
 
     @NonNull
-    ListObject listStorage(@NonNull String key);
+    ListStorable listStorage(@NonNull String key);
 }

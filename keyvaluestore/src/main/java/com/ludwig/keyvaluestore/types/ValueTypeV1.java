@@ -16,7 +16,7 @@
 package com.ludwig.keyvaluestore.types;
 
 import com.ludwig.keyvaluestore.Converter;
-import com.ludwig.keyvaluestore.storage.objects.ValueObject;
+import com.ludwig.keyvaluestore.storage.storable.ValueStorable;
 import io.reactivex.*;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.annotations.Nullable;
@@ -27,9 +27,9 @@ import java.lang.reflect.Type;
 final class ValueTypeV1<T> implements ValueType<T> {
     private final Converter converter;
     private final Type type;
-    private ValueObject storage;
+    private ValueStorable storage;
 
-    ValueTypeV1(@NonNull ValueObject storage, @NonNull Converter converter, @NonNull Type type) {
+    ValueTypeV1(@NonNull ValueStorable storage, @NonNull Converter converter, @NonNull Type type) {
         this.storage = storage;
         this.converter = converter;
         this.type = type;

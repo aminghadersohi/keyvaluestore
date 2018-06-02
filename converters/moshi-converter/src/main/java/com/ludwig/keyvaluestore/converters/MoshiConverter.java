@@ -40,6 +40,7 @@ public class MoshiConverter implements Converter {
     }
 
     @Override
+    @Nullable
     public <T> T read(Store store, Type type) {
         try {
             InputStream inputStream = store.input();

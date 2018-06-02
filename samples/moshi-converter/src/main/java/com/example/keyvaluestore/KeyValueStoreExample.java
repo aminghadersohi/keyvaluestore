@@ -18,7 +18,7 @@ package com.example.keyvaluestore;
 import com.ludwig.keyvaluestore.KeyValueStore;
 import com.ludwig.keyvaluestore.KeyValueStoreFactory;
 import com.ludwig.keyvaluestore.converters.MoshiConverter;
-import com.ludwig.keyvaluestore.storage.stores.FileStoreManager;
+import com.ludwig.keyvaluestore.storage.stores.FileStoreFactory;
 import com.ludwig.keyvaluestore.types.ListType;
 import com.ludwig.keyvaluestore.types.ValueType;
 import com.ludwig.keyvaluestore.types.ValueUpdate;
@@ -29,7 +29,7 @@ import java.util.List;
 
 public class KeyValueStoreExample {
     public static void main(String[] args) {
-        KeyValueStore store = KeyValueStoreFactory.build(new FileStoreManager("/tmp"), new MoshiConverter());
+        KeyValueStore store = KeyValueStoreFactory.build(new FileStoreFactory("/tmp"), new MoshiConverter());
         ValueType<String> valueStore = store.value("value", String.class);
         ListType<String> listStore = store.list("list", String.class);
 
@@ -60,6 +60,7 @@ public class KeyValueStoreExample {
         listStore.observe()
                 .skip(1)
                 .subscribe(new Observer<List<String>>() {
+
                     @Override
                     public void onSubscribe(Disposable d) {
 
@@ -92,43 +93,31 @@ public class KeyValueStoreExample {
         listStore.observeClear().blockingGet();
         valueStore.observeClear().blockingGet();
 
-        Runnable runnable = () -> {
-            listStore.observeClear().blockingGet();
-            for (int i = 0; i < 1000; i++) {
-                final int _i = i;
-                if (Math.random() <= 0.01) {
-                    listStore.observeAdd("listvalue"+i).blockingGet();
-                } else {
-                    listStore.observeRemove(value -> value.equals("listvalue"+_i)).blockingGet();
+        for (int j = 0; j < 100; j++) {
+            final int _j = j;
+            Runnable runnable = () -> {
+                listStore.observeClear().blockingGet();
+                for (int i = _j; i < 1000 + _j; i++) {
+                    final int _i = i;
+                    double rand = Math.random();
+                    if (rand <= 0.001) {
+                        listStore.observeClear().blockingGet();
+                    } else if (rand <= 0.011) {
+                        listStore.observeAdd("listvalue" + i).blockingGet();
+                    } else {
+                        listStore.observeRemove(value -> value.equals("listvalue" + _i)).blockingGet();
+                    }
                 }
-            }
-        };
+            };
 
-        Runnable runnable2 = () -> {
-            listStore.observeClear().blockingGet();
-            for (int i = 0; i < 1000; i++) {
-                final int _i = i;
-                if (Math.random() <= 0.01) {
-                    listStore.observeAdd("listvalue"+i).blockingGet();
-                } else {
-                    listStore.observeRemove(value -> value.equals("listvalue"+_i)).blockingGet();
-                }
-            }
-        };
+            Thread t = new Thread(runnable);
+            t.start();
 
-        Thread t = new Thread(runnable);
-        t.start();
-        Thread t2 = new Thread((runnable2));
-        t2.start();
-        try {
-            t.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        try {
-            t2.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

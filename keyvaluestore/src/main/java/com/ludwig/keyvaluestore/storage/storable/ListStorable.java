@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ludwig.keyvaluestore.storage.objects;
+package com.ludwig.keyvaluestore.storage.storable;
 
 import com.ludwig.keyvaluestore.Converter;
 import com.ludwig.keyvaluestore.types.ListType;
@@ -24,7 +24,7 @@ import io.reactivex.annotations.NonNull;
 import java.lang.reflect.Type;
 import java.util.List;
 
-public interface ListObject {
+public interface ListStorable {
     <T> Single<List<T>> get(Converter converter, Type type);
 
     @NonNull

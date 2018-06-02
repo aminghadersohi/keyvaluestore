@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ludwig.keyvaluestore.storage.objects;
+package com.ludwig.keyvaluestore.storage.storable;
 
 import com.ludwig.keyvaluestore.Converter;
 import com.ludwig.keyvaluestore.storage.Store;
@@ -27,16 +27,14 @@ import io.reactivex.subjects.PublishSubject;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Objects;
 import java.util.Optional;
 
-public class ValueObjectV1 implements ValueObject {
+public class ValueStorableV1 implements ValueStorable {
     protected final PublishSubject updateSubject = PublishSubject.create();
 
-    @NonNull
-    private Store store;
+    @NonNull private Store store;
 
-    public ValueObjectV1(@NonNull Store store) {
+    ValueStorableV1(@NonNull Store store) {
         this.store = store;
     }
 

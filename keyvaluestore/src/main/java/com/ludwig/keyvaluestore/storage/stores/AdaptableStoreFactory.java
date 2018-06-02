@@ -13,20 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ludwig.keyvaluestore.types;
+package com.ludwig.keyvaluestore.storage.stores;
 
-import com.ludwig.keyvaluestore.Converter;
+import com.ludwig.keyvaluestore.storage.StoreAdapter;
+import com.ludwig.keyvaluestore.storage.StoreFactory;
 import com.ludwig.keyvaluestore.storage.storable.ListStorable;
+import com.ludwig.keyvaluestore.storage.storable.StorableFactory;
 import com.ludwig.keyvaluestore.storage.storable.ValueStorable;
 
-import java.lang.reflect.Type;
+public class AdaptableStoreFactory implements StoreFactory {
+    private StoreAdapter storeAdapter;
 
-public final class TypeFactory {
-    public static <T> ListType<T> build(ListStorable storage, Converter converter, Type type) {
-        return new ListTypeV1<T>(storage, converter, type);
+    public AdaptableStoreFactory(StoreAdapter storeAdapter) {
+        this.storeAdapter = storeAdapter;
     }
 
-    public static <T> ValueType<T> build(ValueStorable storage, Converter converter, Type type) {
-        return new ValueTypeV1<T>(storage, converter, type);
+    @Override
+    public ValueStorable valueStorage(String key) {
+        return StorableFactory.value(new AdaptableStore(key, storeAdapter));
+    }
+
+    @Override
+    public ListStorable listStorage(String key) {
+        return StorableFactory.list(new AdaptableStore(key, storeAdapter));
     }
 }
