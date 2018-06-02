@@ -18,3 +18,6 @@ Version 1.0.3 *(2018-05-25)*
 * New AdaptableStore and StoreAdapter classes that can be used to persist to any storage layer such as rest api
 * .gitignore udpate to exclude `out` directories
 * Refactor `objects` package to `storable` package
+* Google Java Format
+* NullAway
+* ErrorProne
