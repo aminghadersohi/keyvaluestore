@@ -16,7 +16,7 @@
 package com.ludwig.keyvaluestore.storage.storable;
 
 import com.ludwig.keyvaluestore.Converter;
-import com.ludwig.keyvaluestore.storage.Store;
+import com.ludwig.keyvaluestore.storage.unit.StorageUnit;
 import com.ludwig.keyvaluestore.types.ValueUpdate;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -30,38 +30,38 @@ import java.util.Optional;
 public class ValueStorableV1 implements ValueStorable {
   protected final PublishSubject updateSubject = PublishSubject.create();
 
-  private Store store;
+  private StorageUnit storageUnit;
 
-  ValueStorableV1(Store store) {
-    this.store = store;
+  ValueStorableV1(StorageUnit storageUnit) {
+    this.storageUnit = storageUnit;
   }
 
   @Override
   public <T> Maybe<T> get(Converter converter, Type type) {
-    return Completable.fromAction(store::startRead)
-        .andThen(store.exists())
+    return Completable.fromAction(storageUnit::startRead)
+        .andThen(storageUnit.exists())
         .filter(Boolean::booleanValue)
-        .map(exists -> Optional.ofNullable(converter.<T>read(store, type)))
+        .map(exists -> Optional.ofNullable(converter.<T>read(storageUnit, type)))
         .filter(Optional::isPresent)
         .map(Optional::get)
-        .doFinally(store::endRead);
+        .doFinally(storageUnit::endRead);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public <T> Single<T> put(Converter converter, Type type, T value) {
-    return Completable.fromAction(store::startWrite)
-        .andThen(store.exists())
-        .flatMap(exists -> exists ? Single.just(true) : store.createNew())
+    return Completable.fromAction(storageUnit::startWrite)
+        .andThen(storageUnit.exists())
+        .flatMap(exists -> exists ? Single.just(true) : storageUnit.createNew())
         .flatMap(
             createSuccess -> {
               if (!createSuccess) {
                 throw new IOException("Could not create store.");
               }
-              return store.converterWrite(value, converter, type);
+              return storageUnit.converterWrite(value, converter, type);
             })
         .doOnSuccess(o -> updateSubject.onNext(new ValueUpdate<>(value)))
-        .doFinally(store::endWrite);
+        .doFinally(storageUnit::endWrite);
   }
 
   @Override
@@ -79,10 +79,10 @@ public class ValueStorableV1 implements ValueStorable {
   @Override
   @SuppressWarnings("unchecked")
   public <T> Completable clear() {
-    return Completable.fromAction(store::startWrite)
-        .andThen(store.exists())
+    return Completable.fromAction(storageUnit::startWrite)
+        .andThen(storageUnit.exists())
         .filter(Boolean::booleanValue)
-        .flatMapSingle(exists -> store.delete())
+        .flatMapSingle(exists -> storageUnit.delete())
         .doOnSuccess(
             deleteSuccess -> {
               if (!deleteSuccess) {
@@ -90,7 +90,7 @@ public class ValueStorableV1 implements ValueStorable {
               }
               updateSubject.onNext(ValueUpdate.<T>empty());
             })
-        .doFinally(store::endWrite)
+        .doFinally(storageUnit::endWrite)
         .ignoreElement();
   }
 }

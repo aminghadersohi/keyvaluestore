@@ -13,29 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ludwig.keyvaluestore.storage.stores;
+package com.ludwig.keyvaluestore.storage;
 
-import com.ludwig.keyvaluestore.storage.StoreFactory;
 import com.ludwig.keyvaluestore.storage.storable.ListStorable;
-import com.ludwig.keyvaluestore.storage.storable.StorableFactory;
 import com.ludwig.keyvaluestore.storage.storable.ValueStorable;
-import java.io.File;
 
-public class FileStoreFactory implements StoreFactory {
+public interface Storage {
 
-  private final String basePath;
+  ValueStorable value(String key);
 
-  public FileStoreFactory(String basePath) {
-    this.basePath = basePath;
-  }
-
-  @Override
-  public ValueStorable valueStorage(String key) {
-    return StorableFactory.value(new FileStore(new File(basePath + "/" + key + ".json")));
-  }
-
-  @Override
-  public ListStorable listStorage(String key) {
-    return StorableFactory.list(new FileStore(new File(basePath + "/" + key + ".json")));
-  }
+  ListStorable list(String key);
 }

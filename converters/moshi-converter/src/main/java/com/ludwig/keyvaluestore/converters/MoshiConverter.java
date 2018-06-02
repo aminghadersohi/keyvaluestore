@@ -2,7 +2,7 @@ package com.ludwig.keyvaluestore.converters;
 
 import com.ludwig.keyvaluestore.Converter;
 import com.ludwig.keyvaluestore.ConverterException;
-import com.ludwig.keyvaluestore.storage.Store;
+import com.ludwig.keyvaluestore.storage.unit.StorageUnit;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import io.reactivex.annotations.Nullable;
@@ -25,9 +25,10 @@ public class MoshiConverter implements Converter {
   }
 
   @Override
-  public <T> void write(@Nullable T data, Type type, Store store) throws ConverterException {
+  public <T> void write(@Nullable T data, Type type, StorageUnit storageUnit)
+      throws ConverterException {
     try {
-      OutputStream outputStream = store.output();
+      OutputStream outputStream = storageUnit.output();
       JsonAdapter<T> adapter = moshi.adapter(type);
       BufferedSink sink = Okio.buffer(Okio.sink(outputStream));
       adapter.toJson(sink, data);
@@ -41,9 +42,9 @@ public class MoshiConverter implements Converter {
   @Override
   @Nullable
   @SuppressWarnings("TypeParameterUnusedInFormals")
-  public <T> T read(Store store, Type type) {
+  public <T> T read(StorageUnit storageUnit, Type type) {
     try {
-      InputStream inputStream = store.input();
+      InputStream inputStream = storageUnit.input();
       JsonAdapter<T> adapter = moshi.adapter(type);
       BufferedSource source = Okio.buffer(Okio.source(inputStream));
       T value;

@@ -16,7 +16,7 @@
 package com.ludwig.keyvaluestore.storage.storable;
 
 import com.ludwig.keyvaluestore.Converter;
-import com.ludwig.keyvaluestore.storage.Store;
+import com.ludwig.keyvaluestore.storage.unit.StorageUnit;
 import com.ludwig.keyvaluestore.types.ListType;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -29,39 +29,39 @@ import java.util.*;
 
 public class ListStorableV1 implements ListStorable {
   private final PublishSubject updateSubject = PublishSubject.create();
-  private final Store store;
+  private final StorageUnit storageUnit;
 
-  ListStorableV1(Store store) {
-    this.store = store;
+  ListStorableV1(StorageUnit storageUnit) {
+    this.storageUnit = storageUnit;
   }
 
   @Override
   public <T> Single<List<T>> get(Converter converter, Type type) {
-    return Completable.fromAction(store::startRead)
-        .andThen(store.exists())
+    return Completable.fromAction(storageUnit::startRead)
+        .andThen(storageUnit.exists())
         .filter(Boolean::booleanValue)
-        .map(exists -> Optional.ofNullable(converter.<List<T>>read(store, type)))
+        .map(exists -> Optional.ofNullable(converter.<List<T>>read(storageUnit, type)))
         .filter(Optional::isPresent)
         .map(Optional::get)
         .toSingle(Collections.emptyList())
-        .doFinally(store::endRead);
+        .doFinally(storageUnit::endRead);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public <T> Single<List<T>> put(Converter converter, Type type, List<T> list) {
-    return Completable.fromAction(store::startWrite)
-        .andThen(store.exists())
-        .flatMap(exists -> exists ? Single.just(true) : store.createNew())
+    return Completable.fromAction(storageUnit::startWrite)
+        .andThen(storageUnit.exists())
+        .flatMap(exists -> exists ? Single.just(true) : storageUnit.createNew())
         .flatMap(
             exists -> {
               if (!exists) {
                 throw new IOException("Could not create store.");
               }
-              return store.converterWrite(list, converter, type);
+              return storageUnit.converterWrite(list, converter, type);
             })
         .doOnSuccess(updateSubject::onNext)
-        .doFinally(store::endWrite);
+        .doFinally(storageUnit::endWrite);
   }
 
   @Override
@@ -73,9 +73,9 @@ public class ListStorableV1 implements ListStorable {
   @Override
   @SuppressWarnings("unchecked")
   public <T> Single<List<T>> clear() {
-    return Completable.fromAction(store::startWrite)
-        .andThen(store.exists())
-        .flatMap(exists -> exists ? store.delete() : Single.just(true))
+    return Completable.fromAction(storageUnit::startWrite)
+        .andThen(storageUnit.exists())
+        .flatMap(exists -> exists ? storageUnit.delete() : Single.just(true))
         .map(
             success -> {
               if (!success) {
@@ -85,21 +85,21 @@ public class ListStorableV1 implements ListStorable {
               return Collections.<T>emptyList();
             })
         .doOnSuccess(o -> updateSubject.onNext(Collections.<T>emptyList()))
-        .doFinally(store::endWrite);
+        .doFinally(storageUnit::endWrite);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public <T> Single<List<T>> append(T value, Converter converter, Type type) {
-    return Completable.fromAction(store::startWrite)
-        .andThen(store.exists())
-        .flatMap(exists -> exists ? Single.just(true) : store.createNew())
+    return Completable.fromAction(storageUnit::startWrite)
+        .andThen(storageUnit.exists())
+        .flatMap(exists -> exists ? Single.just(true) : storageUnit.createNew())
         .map(
             success -> {
               if (!success) {
                 throw new IOException("Could not create store.");
               }
-              return Optional.ofNullable(converter.<List<T>>read(store, type));
+              return Optional.ofNullable(converter.<List<T>>read(storageUnit, type));
             })
         .filter(Optional::isPresent)
         .map(Optional::get)
@@ -109,22 +109,22 @@ public class ListStorableV1 implements ListStorable {
               List<T> result = new ArrayList<>(originalList.size() + 1);
               result.addAll(originalList);
               result.add(value);
-              return store.converterWrite(result, converter, type);
+              return storageUnit.converterWrite(result, converter, type);
             })
         .doOnSuccess(updateSubject::onNext)
-        .doFinally(store::endWrite);
+        .doFinally(storageUnit::endWrite);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public <T> Single<List<T>> replace(
       T value, ListType.PredicateFunc<T> predicateFunc, Converter converter, Type type) {
-    return Completable.fromAction(store::startWrite)
-        .andThen(store.exists())
+    return Completable.fromAction(storageUnit::startWrite)
+        .andThen(storageUnit.exists())
         .filter(Boolean::booleanValue)
         .flatMap(
             exists -> {
-              List<T> originalList = converter.read(store, type);
+              List<T> originalList = converter.read(storageUnit, type);
               if (originalList == null) originalList = Collections.emptyList();
 
               int indexOfItemToReplace = -1;
@@ -140,28 +140,28 @@ public class ListStorableV1 implements ListStorable {
                 List<T> modifiedList = new ArrayList<T>(originalList);
                 modifiedList.remove(indexOfItemToReplace);
                 modifiedList.add(indexOfItemToReplace, value);
-                return store.converterWrite(modifiedList, converter, type).toMaybe();
+                return storageUnit.converterWrite(modifiedList, converter, type).toMaybe();
               }
               return Maybe.just(originalList);
             })
         .toSingle(Collections.<T>emptyList())
         .doOnSuccess(updateSubject::onNext)
-        .doFinally(store::endWrite);
+        .doFinally(storageUnit::endWrite);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public <T> Single<List<T>> addOrReplace(
       T value, ListType.PredicateFunc<T> predicateFunc, Converter converter, Type type) {
-    return Completable.fromAction(store::startWrite)
-        .andThen(store.exists())
-        .flatMap(exists -> exists ? Single.just(true) : store.createNew())
+    return Completable.fromAction(storageUnit::startWrite)
+        .andThen(storageUnit.exists())
+        .flatMap(exists -> exists ? Single.just(true) : storageUnit.createNew())
         .flatMap(
             createSuccess -> {
               if (!createSuccess) {
                 throw new IOException("Could not create store.");
               }
-              List<T> originalList = converter.read(store, type);
+              List<T> originalList = converter.read(storageUnit, type);
               if (originalList == null) originalList = Collections.emptyList();
 
               int indexOfItemToReplace = -1;
@@ -186,22 +186,22 @@ public class ListStorableV1 implements ListStorable {
                 modifiedList.add(indexOfItemToReplace, value);
               }
 
-              return store.converterWrite(modifiedList, converter, type);
+              return storageUnit.converterWrite(modifiedList, converter, type);
             })
         .doOnSuccess(updateSubject::onNext)
-        .doFinally(store::endWrite);
+        .doFinally(storageUnit::endWrite);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public <T> Single<List<T>> remove(
       final ListType.PredicateFunc<T> predicateFunc, Converter converter, Type type) {
-    return Completable.fromAction(store::startWrite)
-        .andThen(store.exists())
+    return Completable.fromAction(storageUnit::startWrite)
+        .andThen(storageUnit.exists())
         .filter(Boolean::booleanValue)
         .flatMap(
             exists -> {
-              List<T> originalList = converter.read(store, type);
+              List<T> originalList = converter.read(storageUnit, type);
               if (originalList == null) originalList = Collections.emptyList();
 
               List<T> modifiedList = new ArrayList<T>(originalList);
@@ -217,13 +217,13 @@ public class ListStorableV1 implements ListStorable {
               }
 
               if (removed) {
-                return store.converterWrite(modifiedList, converter, type).toMaybe();
+                return storageUnit.converterWrite(modifiedList, converter, type).toMaybe();
               }
               return Maybe.just(modifiedList);
             })
         .toSingle(Collections.emptyList())
         .doOnSuccess(updateSubject::onNext)
-        .doFinally(store::endWrite);
+        .doFinally(storageUnit::endWrite);
   }
 
   @Override
@@ -231,12 +231,12 @@ public class ListStorableV1 implements ListStorable {
   public <T> Single<List<T>> removeAll(
       final ListType.PredicateFunc<T> predicateFunc, Converter converter, Type type) {
 
-    return Completable.fromAction(store::startWrite)
-        .andThen(store.exists())
+    return Completable.fromAction(storageUnit::startWrite)
+        .andThen(storageUnit.exists())
         .filter(Boolean::booleanValue)
         .flatMap(
             exists -> {
-              List<T> originalList = converter.read(store, type);
+              List<T> originalList = converter.read(storageUnit, type);
               if (originalList == null) originalList = Collections.emptyList();
 
               List<T> modifiedList = new ArrayList<T>(originalList);
@@ -251,33 +251,33 @@ public class ListStorableV1 implements ListStorable {
               }
 
               if (removed) {
-                return store.converterWrite(modifiedList, converter, type).toMaybe();
+                return storageUnit.converterWrite(modifiedList, converter, type).toMaybe();
               }
               return Maybe.just(modifiedList);
             })
         .toSingle(Collections.emptyList())
         .doOnSuccess(updateSubject::onNext)
-        .doFinally(store::endWrite);
+        .doFinally(storageUnit::endWrite);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public <T> Single<List<T>> remove(int position, Converter converter, Type type) {
-    return Completable.fromAction(store::startWrite)
-        .andThen(store.exists())
+    return Completable.fromAction(storageUnit::startWrite)
+        .andThen(storageUnit.exists())
         .filter(Boolean::booleanValue)
         .flatMap(
             exists -> {
-              List<T> originalList = converter.read(store, type);
+              List<T> originalList = converter.read(storageUnit, type);
               if (originalList == null) originalList = Collections.emptyList();
 
               List<T> modifiedList = new ArrayList<T>(originalList);
               modifiedList.remove(position);
 
-              return store.converterWrite(modifiedList, converter, type).toMaybe();
+              return storageUnit.converterWrite(modifiedList, converter, type).toMaybe();
             })
         .toSingle(Collections.emptyList())
         .doOnSuccess(updateSubject::onNext)
-        .doFinally(store::endWrite);
+        .doFinally(storageUnit::endWrite);
   }
 }

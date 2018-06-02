@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ludwig.keyvaluestore.storage;
+package com.ludwig.keyvaluestore.storage.unit;
 
 import com.ludwig.keyvaluestore.Converter;
 import io.reactivex.Single;
@@ -23,7 +23,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.Type;
 
-public interface Store {
+public interface StorageUnit {
 
   Reader reader() throws Exception;
 

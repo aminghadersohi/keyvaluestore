@@ -3,7 +3,7 @@ package com.ludwig.keyvaluestore.storage;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 
-public interface StoreAdapter {
+public interface StorageAdapter {
 
   Completable write(String key, String value);
 

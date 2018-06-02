@@ -3,7 +3,7 @@ package com.ludwig.keyvaluestore.converters;
 import com.google.gson.Gson;
 import com.ludwig.keyvaluestore.Converter;
 import com.ludwig.keyvaluestore.ConverterException;
-import com.ludwig.keyvaluestore.storage.Store;
+import com.ludwig.keyvaluestore.storage.unit.StorageUnit;
 import io.reactivex.annotations.Nullable;
 import java.io.Reader;
 import java.io.Writer;
@@ -21,9 +21,10 @@ public class GsonConverter implements Converter {
   }
 
   @Override
-  public <T> void write(@Nullable T data, Type type, Store store) throws ConverterException {
+  public <T> void write(@Nullable T data, Type type, StorageUnit storageUnit)
+      throws ConverterException {
     try {
-      Writer writer = store.writer();
+      Writer writer = storageUnit.writer();
       gson.toJson(data, type, writer);
       writer.close();
     } catch (Exception e) {
@@ -34,9 +35,9 @@ public class GsonConverter implements Converter {
   @Override
   @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
   @Nullable
-  public <T> T read(Store store, Type type) throws ConverterException {
+  public <T> T read(StorageUnit storageUnit, Type type) throws ConverterException {
     try {
-      Reader reader = store.reader();
+      Reader reader = storageUnit.reader();
       T value = gson.fromJson(reader, type);
       reader.close();
       return value;

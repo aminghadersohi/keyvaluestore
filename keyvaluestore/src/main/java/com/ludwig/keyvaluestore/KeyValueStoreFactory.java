@@ -15,11 +15,11 @@
  */
 package com.ludwig.keyvaluestore;
 
-import com.ludwig.keyvaluestore.storage.StoreFactory;
+import com.ludwig.keyvaluestore.storage.Storage;
 
 public final class KeyValueStoreFactory {
 
-  public static KeyValueStore build(StoreFactory storeFactory, Converter converter) {
-    return new KeyValueStoreV1(storeFactory, converter);
+  public static KeyValueStore build(Storage storage, Converter converter) {
+    return new KeyValueStoreV1(storage, converter);
   }
 }

@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ludwig.keyvaluestore.storage.stores;
+package com.ludwig.keyvaluestore.storage.unit;
 
 import com.ludwig.keyvaluestore.Converter;
-import com.ludwig.keyvaluestore.storage.Store;
 import io.reactivex.Single;
 import io.reactivex.annotations.Nullable;
 import java.io.*;
@@ -24,12 +23,12 @@ import java.lang.reflect.Type;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class FileStore implements Store {
+public class FileStorageUnit implements StorageUnit {
   protected final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
   private final File file;
   @Nullable private Integer readCount;
 
-  FileStore(File file) {
+  public FileStorageUnit(File file) {
     this.file = file;
   }
 
@@ -57,17 +56,17 @@ public class FileStore implements Store {
 
   @Override
   public Single<Boolean> exists() {
-    return Single.fromCallable(() -> FileStore.this.file.exists());
+    return Single.fromCallable(() -> FileStorageUnit.this.file.exists());
   }
 
   @Override
   public Single<Boolean> createNew() {
-    return Single.fromCallable(() -> FileStore.this.file.createNewFile());
+    return Single.fromCallable(() -> FileStorageUnit.this.file.createNewFile());
   }
 
   @Override
   public Single<Boolean> delete() {
-    return Single.fromCallable(() -> FileStore.this.file.delete());
+    return Single.fromCallable(() -> FileStorageUnit.this.file.delete());
   }
 
   @Override
@@ -132,11 +131,12 @@ public class FileStore implements Store {
     writeLock.unlock();
   }
 
-  private Single<FileStore> createTemp() {
-    return Single.fromCallable(() -> new FileStore(new File(this.file.getAbsolutePath() + ".tmp")));
+  private Single<FileStorageUnit> createTemp() {
+    return Single.fromCallable(
+        () -> new FileStorageUnit(new File(this.file.getAbsolutePath() + ".tmp")));
   }
 
-  private Single<Boolean> set(FileStore storage) {
+  private Single<Boolean> set(FileStorageUnit storage) {
     return Single.fromCallable(() -> storage.file.renameTo(this.file));
   }
 }

@@ -1,13 +1,13 @@
 package com.ludwig.keyvaluestore.storage.storable;
 
-import com.ludwig.keyvaluestore.storage.Store;
+import com.ludwig.keyvaluestore.storage.unit.StorageUnit;
 
 public final class StorableFactory {
-  public static ListStorable list(Store store) {
-    return new ListStorableV1(store);
+  public static ListStorable list(StorageUnit storageUnit) {
+    return new ListStorableV1(storageUnit);
   }
 
-  public static ValueStorable value(Store store) {
-    return new ValueStorableV1(store);
+  public static ValueStorable value(StorageUnit storageUnit) {
+    return new ValueStorableV1(storageUnit);
   }
 }

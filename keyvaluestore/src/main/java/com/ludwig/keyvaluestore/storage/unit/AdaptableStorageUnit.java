@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ludwig.keyvaluestore.storage.stores;
+package com.ludwig.keyvaluestore.storage.unit;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.ludwig.keyvaluestore.Converter;
-import com.ludwig.keyvaluestore.storage.Store;
-import com.ludwig.keyvaluestore.storage.StoreAdapter;
+import com.ludwig.keyvaluestore.storage.StorageAdapter;
 import io.reactivex.Single;
 import io.reactivex.annotations.Nullable;
 import java.io.*;
 import java.lang.reflect.Type;
 
-public class AdaptableStore implements Store {
+public class AdaptableStorageUnit implements StorageUnit {
   private final String key;
-  private final StoreAdapter storeAdapter;
+  private final StorageAdapter storageAdapter;
 
-  AdaptableStore(String key, StoreAdapter storeAdapter) {
+  public AdaptableStorageUnit(String key, StorageAdapter storageAdapter) {
     this.key = key;
-    this.storeAdapter = storeAdapter;
+    this.storageAdapter = storageAdapter;
   }
 
   @Override
@@ -43,7 +42,7 @@ public class AdaptableStore implements Store {
       @Override
       public int read(char[] b, int off, int len) {
         if (buffer == null) {
-          buffer = storeAdapter.read(key).blockingGet();
+          buffer = storageAdapter.read(key).blockingGet();
         }
         int read = 0;
         for (int i = off; i < buffer.length() && read < len; i++, read++) {
@@ -87,7 +86,7 @@ public class AdaptableStore implements Store {
           throw new IOException("Stream Closed");
         }
         if (buffer == null) {
-          buffer = storeAdapter.read(key).blockingGet();
+          buffer = storageAdapter.read(key).blockingGet();
         }
         int read = 0;
         for (int i = off; i < buffer.length() && read < len; i++, read++) {
@@ -121,7 +120,7 @@ public class AdaptableStore implements Store {
 
       @Override
       public void flush() {
-        storeAdapter.write(key, buffer.toString()).blockingAwait();
+        storageAdapter.write(key, buffer.toString()).blockingAwait();
       }
 
       @Override
@@ -163,7 +162,7 @@ public class AdaptableStore implements Store {
           if (closed) {
             return;
           }
-          storeAdapter.write(key, buffer.toString()).blockingAwait();
+          storageAdapter.write(key, buffer.toString()).blockingAwait();
           closed = true;
           buffer = new StringBuilder();
         }
@@ -173,24 +172,24 @@ public class AdaptableStore implements Store {
 
   @Override
   public Single<Boolean> exists() {
-    return storeAdapter.exists(key);
+    return storageAdapter.exists(key);
   }
 
   @Override
   public Single<Boolean> createNew() {
-    return storeAdapter.createNew(key);
+    return storageAdapter.createNew(key);
   }
 
   @Override
   public Single<Boolean> delete() {
-    return storeAdapter.delete(key);
+    return storageAdapter.delete(key);
   }
 
   @Override
   public <T> Single<T> converterWrite(T value, Converter converter, Type type) {
     return Single.fromCallable(
         () -> {
-          converter.write(value, type, AdaptableStore.this);
+          converter.write(value, type, AdaptableStorageUnit.this);
           return value;
         });
   }

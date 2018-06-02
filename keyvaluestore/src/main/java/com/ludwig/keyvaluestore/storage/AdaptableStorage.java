@@ -13,28 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.ludwig.keyvaluestore.storage.stores;
+package com.ludwig.keyvaluestore.storage;
 
-import com.ludwig.keyvaluestore.storage.StoreAdapter;
-import com.ludwig.keyvaluestore.storage.StoreFactory;
 import com.ludwig.keyvaluestore.storage.storable.ListStorable;
 import com.ludwig.keyvaluestore.storage.storable.StorableFactory;
 import com.ludwig.keyvaluestore.storage.storable.ValueStorable;
+import com.ludwig.keyvaluestore.storage.unit.AdaptableStorageUnit;
 
-public class AdaptableStoreFactory implements StoreFactory {
-  private StoreAdapter storeAdapter;
+public class AdaptableStorage implements Storage {
+  private StorageAdapter storageAdapter;
 
-  public AdaptableStoreFactory(StoreAdapter storeAdapter) {
-    this.storeAdapter = storeAdapter;
+  public AdaptableStorage(StorageAdapter storageAdapter) {
+    this.storageAdapter = storageAdapter;
   }
 
   @Override
-  public ValueStorable valueStorage(String key) {
-    return StorableFactory.value(new AdaptableStore(key, storeAdapter));
+  public ValueStorable value(String key) {
+    return StorableFactory.value(new AdaptableStorageUnit(key, storageAdapter));
   }
 
   @Override
-  public ListStorable listStorage(String key) {
-    return StorableFactory.list(new AdaptableStore(key, storeAdapter));
+  public ListStorable list(String key) {
+    return StorableFactory.list(new AdaptableStorageUnit(key, storageAdapter));
   }
 }

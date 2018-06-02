@@ -18,7 +18,7 @@ package com.example.keyvaluestore;
 import com.ludwig.keyvaluestore.KeyValueStore;
 import com.ludwig.keyvaluestore.KeyValueStoreFactory;
 import com.ludwig.keyvaluestore.converters.MoshiConverter;
-import com.ludwig.keyvaluestore.storage.stores.FileStoreFactory;
+import com.ludwig.keyvaluestore.storage.FileStorage;
 import com.ludwig.keyvaluestore.types.ListType;
 import com.ludwig.keyvaluestore.types.ValueType;
 import com.ludwig.keyvaluestore.types.ValueUpdate;
@@ -29,8 +29,7 @@ import java.util.List;
 public class KeyValueStoreExample {
   @SuppressWarnings({"CheckReturnValue", "CatchAndPrintStackTrace"})
   public static void main(String[] args) {
-    KeyValueStore store =
-        KeyValueStoreFactory.build(new FileStoreFactory("/tmp"), new MoshiConverter());
+    KeyValueStore store = KeyValueStoreFactory.build(new FileStorage("/tmp"), new MoshiConverter());
     ValueType<String> valueStore = store.value("value", String.class);
     ListType<String> listStore = store.list("list", String.class);
 
