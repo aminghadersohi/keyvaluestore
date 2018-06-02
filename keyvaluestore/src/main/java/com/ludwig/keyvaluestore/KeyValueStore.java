@@ -17,15 +17,11 @@ package com.ludwig.keyvaluestore;
 
 import com.ludwig.keyvaluestore.types.ListType;
 import com.ludwig.keyvaluestore.types.ValueType;
-
-
 import java.lang.reflect.Type;
 
 public interface KeyValueStore {
 
+  <T> ListType<T> list(String key, Type type);
 
-    <T> ListType<T> list(String key, Type type);
-
-
-    <T> ValueType<T> value(String key, Type type);
+  <T> ValueType<T> value(String key, Type type);
 }

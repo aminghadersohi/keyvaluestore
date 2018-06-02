@@ -18,12 +18,9 @@ package com.ludwig.keyvaluestore.storage;
 import com.ludwig.keyvaluestore.storage.storable.ListStorable;
 import com.ludwig.keyvaluestore.storage.storable.ValueStorable;
 
-
 public interface StoreFactory {
 
+  ValueStorable valueStorage(String key);
 
-    ValueStorable valueStorage(String key);
-
-
-    ListStorable listStorage(String key);
+  ListStorable listStorage(String key);
 }

@@ -19,31 +19,26 @@ import com.ludwig.keyvaluestore.storage.StoreFactory;
 import com.ludwig.keyvaluestore.types.ListType;
 import com.ludwig.keyvaluestore.types.TypeFactory;
 import com.ludwig.keyvaluestore.types.ValueType;
-
-
 import java.lang.reflect.Type;
 
 class KeyValueStoreV1 implements KeyValueStore {
 
+  private final StoreFactory storeFactory;
 
-    private final StoreFactory storeFactory;
+  private final Converter converter;
 
-    private final Converter converter;
+  KeyValueStoreV1(StoreFactory storeFactory, Converter converter) {
+    this.storeFactory = storeFactory;
+    this.converter = converter;
+  }
 
-    KeyValueStoreV1(StoreFactory storeFactory, Converter converter) {
-        this.storeFactory = storeFactory;
-        this.converter = converter;
-    }
+  @Override
+  public <T> ValueType<T> value(String key, Type type) {
+    return TypeFactory.build(storeFactory.valueStorage(key), converter, type);
+  }
 
-    @Override
-
-    public <T> ValueType<T> value(String key, Type type) {
-        return TypeFactory.build(storeFactory.valueStorage(key), converter, type);
-    }
-
-    @Override
-
-    public <T> ListType<T> list(String key, Type type) {
-        return TypeFactory.build(storeFactory.listStorage(key), converter, type);
-    }
+  @Override
+  public <T> ListType<T> list(String key, Type type) {
+    return TypeFactory.build(storeFactory.listStorage(key), converter, type);
+  }
 }

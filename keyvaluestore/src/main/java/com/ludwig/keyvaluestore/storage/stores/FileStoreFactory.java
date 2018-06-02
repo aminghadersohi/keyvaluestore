@@ -15,32 +15,27 @@
  */
 package com.ludwig.keyvaluestore.storage.stores;
 
-import com.ludwig.keyvaluestore.storage.*;
+import com.ludwig.keyvaluestore.storage.StoreFactory;
 import com.ludwig.keyvaluestore.storage.storable.ListStorable;
 import com.ludwig.keyvaluestore.storage.storable.StorableFactory;
 import com.ludwig.keyvaluestore.storage.storable.ValueStorable;
-
-
 import java.io.File;
 
 public class FileStoreFactory implements StoreFactory {
 
+  private final String basePath;
 
-    private final String basePath;
+  public FileStoreFactory(String basePath) {
+    this.basePath = basePath;
+  }
 
-    public FileStoreFactory(String basePath) {
-        this.basePath = basePath;
-    }
+  @Override
+  public ValueStorable valueStorage(String key) {
+    return StorableFactory.value(new FileStore(new File(basePath + "/" + key + ".json")));
+  }
 
-
-    @Override
-    public ValueStorable valueStorage(String key) {
-        return StorableFactory.value(new FileStore(new File(basePath + "/" + key + ".json")));
-    }
-
-
-    @Override
-    public ListStorable listStorage(String key) {
-        return StorableFactory.list(new FileStore(new File(basePath + "/" + key + ".json")));
-    }
+  @Override
+  public ListStorable listStorage(String key) {
+    return StorableFactory.list(new FileStore(new File(basePath + "/" + key + ".json")));
+  }
 }

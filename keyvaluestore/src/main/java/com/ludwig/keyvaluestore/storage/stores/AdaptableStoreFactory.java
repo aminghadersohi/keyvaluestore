@@ -22,19 +22,19 @@ import com.ludwig.keyvaluestore.storage.storable.StorableFactory;
 import com.ludwig.keyvaluestore.storage.storable.ValueStorable;
 
 public class AdaptableStoreFactory implements StoreFactory {
-    private StoreAdapter storeAdapter;
+  private StoreAdapter storeAdapter;
 
-    public AdaptableStoreFactory(StoreAdapter storeAdapter) {
-        this.storeAdapter = storeAdapter;
-    }
+  public AdaptableStoreFactory(StoreAdapter storeAdapter) {
+    this.storeAdapter = storeAdapter;
+  }
 
-    @Override
-    public ValueStorable valueStorage(String key) {
-        return StorableFactory.value(new AdaptableStore(key, storeAdapter));
-    }
+  @Override
+  public ValueStorable valueStorage(String key) {
+    return StorableFactory.value(new AdaptableStore(key, storeAdapter));
+  }
 
-    @Override
-    public ListStorable listStorage(String key) {
-        return StorableFactory.list(new AdaptableStore(key, storeAdapter));
-    }
+  @Override
+  public ListStorable listStorage(String key) {
+    return StorableFactory.list(new AdaptableStore(key, storeAdapter));
+  }
 }

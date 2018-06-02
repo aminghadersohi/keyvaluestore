@@ -18,43 +18,43 @@ package com.ludwig.keyvaluestore.types;
 import io.reactivex.annotations.Nullable;
 
 /**
- * Wraps the current value in a {@link ValueType}. This is useful as {@link ValueType#observe()}
- * is unable to deliver null objects in {@code onNext()} to represent an empty state. To that end,
- * you may query {@link ValueUpdate#empty update.empty} to determine if the current value is empty
- * and whether or not {@link ValueUpdate#value update.value} is null.
+ * Wraps the current value in a {@link ValueType}. This is useful as {@link ValueType#observe()} is
+ * unable to deliver null objects in {@code onNext()} to represent an empty state. To that end, you
+ * may query {@link ValueUpdate#empty update.empty} to determine if the current value is empty and
+ * whether or not {@link ValueUpdate#value update.value} is null.
  */
 public final class ValueUpdate<T> {
-    @SuppressWarnings("unchecked") // Empty instance needs no type as value is always null.
-    private static final ValueUpdate EMPTY = new ValueUpdate(null);
-    @Nullable
-    public final T value;
-    public final boolean empty;
+  @SuppressWarnings("unchecked") // Empty instance needs no type as value is always null.
+  private static final ValueUpdate EMPTY = new ValueUpdate(null);
 
-    public ValueUpdate(@Nullable T value) {
-        this.value = value;
-        this.empty = value == null;
-    }
+  @Nullable public final T value;
+  public final boolean empty;
 
-    @SuppressWarnings("unchecked")
-    public static <T> ValueUpdate<T> empty() {
-        return (ValueUpdate<T>) EMPTY;
-    }
+  public ValueUpdate(@Nullable T value) {
+    this.value = value;
+    this.empty = value == null;
+  }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!(obj instanceof ValueUpdate)) return false;
+  @SuppressWarnings("unchecked")
+  public static <T> ValueUpdate<T> empty() {
+    return (ValueUpdate<T>) EMPTY;
+  }
 
-        ValueUpdate other = (ValueUpdate) obj;
-        if (this.empty) return other.empty;
-        return this.value == other.value
-                || (this.value != null && other.value != null && this.value.equals(other.value));
-    }
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (!(obj instanceof ValueUpdate)) return false;
 
-    @Override
-    public int hashCode() {
-        int valueHash = value == null ? 0 : value.hashCode();
-        int emptyHash = empty ? 1 : 0;
-        return 37 * (valueHash + emptyHash);
-    }
+    ValueUpdate other = (ValueUpdate) obj;
+    if (this.empty) return other.empty;
+    return this.value == other.value
+        || (this.value != null && other.value != null && this.value.equals(other.value));
+  }
+
+  @Override
+  public int hashCode() {
+    int valueHash = value == null ? 0 : value.hashCode();
+    int emptyHash = empty ? 1 : 0;
+    return 37 * (valueHash + emptyHash);
+  }
 }

@@ -17,10 +17,9 @@ package com.ludwig.keyvaluestore;
 
 import com.ludwig.keyvaluestore.storage.StoreFactory;
 
-
 public final class KeyValueStoreFactory {
 
-    public static KeyValueStore build(StoreFactory storeFactory, Converter converter) {
-        return new KeyValueStoreV1(storeFactory, converter);
-    }
+  public static KeyValueStore build(StoreFactory storeFactory, Converter converter) {
+    return new KeyValueStoreV1(storeFactory, converter);
+  }
 }

@@ -22,76 +22,75 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-
 import io.reactivex.subjects.PublishSubject;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Optional;
 
 public class ValueStorableV1 implements ValueStorable {
-    protected final PublishSubject updateSubject = PublishSubject.create();
+  protected final PublishSubject updateSubject = PublishSubject.create();
 
-    private Store store;
+  private Store store;
 
-    ValueStorableV1(Store store) {
-        this.store = store;
-    }
+  ValueStorableV1(Store store) {
+    this.store = store;
+  }
 
-    @Override
+  @Override
+  public <T> Maybe<T> get(Converter converter, Type type) {
+    return Completable.fromAction(store::startRead)
+        .andThen(store.exists())
+        .filter(Boolean::booleanValue)
+        .map(exists -> Optional.ofNullable(converter.<T>read(store, type)))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .doFinally(store::endRead);
+  }
 
-    public <T> Maybe<T> get(Converter converter, Type type) {
-        return Completable.fromAction(store::startRead)
-                .andThen(store.exists())
-                .filter(Boolean::booleanValue)
-                .map(exists -> Optional.ofNullable(converter.<T>read(store, type)))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .doFinally(store::endRead);
-    }
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> Single<T> put(Converter converter, Type type, T value) {
+    return Completable.fromAction(store::startWrite)
+        .andThen(store.exists())
+        .flatMap(exists -> exists ? Single.just(true) : store.createNew())
+        .flatMap(
+            createSuccess -> {
+              if (!createSuccess) {
+                throw new IOException("Could not create store.");
+              }
+              return store.converterWrite(value, converter, type);
+            })
+        .doOnSuccess(o -> updateSubject.onNext(new ValueUpdate<>(value)))
+        .doFinally(store::endWrite);
+  }
 
-    @Override
-
-    @SuppressWarnings("unchecked")
-    public <T> Single<T> put(Converter converter, Type type, T value) {
-        return Completable.fromAction(store::startWrite)
-                .andThen(store.exists())
-                .flatMap(exists -> exists ? Single.just(true) : store.createNew())
-                .flatMap(createSuccess -> {
-                    if (!createSuccess) {
-                        throw new IOException("Could not create store.");
-                    }
-                    return store.converterWrite(value, converter, type);
-                })
-                .doOnSuccess(o -> updateSubject.onNext(new ValueUpdate<>(value)))
-                .doFinally(store::endWrite);
-    }
-
-    @Override
-
-    @SuppressWarnings("unchecked")
-    public <T> Observable<ValueUpdate<T>> observe(Converter converter, Type type) {
-        return updateSubject.startWith(get(converter, type)
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> Observable<ValueUpdate<T>> observe(Converter converter, Type type) {
+    return updateSubject
+        .startWith(
+            get(converter, type)
                 .map(value -> new ValueUpdate<>((T) value))
                 .defaultIfEmpty(ValueUpdate.empty())
-                .toObservable()).hide();
-    }
+                .toObservable())
+        .hide();
+  }
 
-    @Override
-
-    @SuppressWarnings("unchecked")
-    public <T> Completable clear() {
-        return Completable.fromAction(store::startWrite)
-                .andThen(store.exists())
-                .filter(Boolean::booleanValue)
-                .flatMapSingle(exists -> store.delete())
-                .doOnSuccess(deleteSuccess -> {
-                    if (!deleteSuccess) {
-                        throw new IOException("Clear operation on store failed.");
-                    }
-                    updateSubject.onNext(ValueUpdate.<T>empty());
-                })
-                .doFinally(store::endWrite)
-                .ignoreElement();
-    }
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> Completable clear() {
+    return Completable.fromAction(store::startWrite)
+        .andThen(store.exists())
+        .filter(Boolean::booleanValue)
+        .flatMapSingle(exists -> store.delete())
+        .doOnSuccess(
+            deleteSuccess -> {
+              if (!deleteSuccess) {
+                throw new IOException("Clear operation on store failed.");
+              }
+              updateSubject.onNext(ValueUpdate.<T>empty());
+            })
+        .doFinally(store::endWrite)
+        .ignoreElement();
+  }
 }

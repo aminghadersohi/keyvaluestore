@@ -18,15 +18,14 @@ package com.ludwig.keyvaluestore.types;
 import com.ludwig.keyvaluestore.Converter;
 import com.ludwig.keyvaluestore.storage.storable.ListStorable;
 import com.ludwig.keyvaluestore.storage.storable.ValueStorable;
-
 import java.lang.reflect.Type;
 
 public final class TypeFactory {
-    public static <T> ListType<T> build(ListStorable storage, Converter converter, Type type) {
-        return new ListTypeV1<T>(storage, converter, type);
-    }
+  public static <T> ListType<T> build(ListStorable storage, Converter converter, Type type) {
+    return new ListTypeV1<T>(storage, converter, type);
+  }
 
-    public static <T> ValueType<T> build(ValueStorable storage, Converter converter, Type type) {
-        return new ValueTypeV1<T>(storage, converter, type);
-    }
+  public static <T> ValueType<T> build(ValueStorable storage, Converter converter, Type type) {
+    return new ValueTypeV1<T>(storage, converter, type);
+  }
 }

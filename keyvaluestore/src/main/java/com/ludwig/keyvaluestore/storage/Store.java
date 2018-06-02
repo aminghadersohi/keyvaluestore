@@ -17,37 +17,35 @@ package com.ludwig.keyvaluestore.storage;
 
 import com.ludwig.keyvaluestore.Converter;
 import io.reactivex.Single;
-
-
-import java.io.*;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
 import java.lang.reflect.Type;
 
 public interface Store {
 
-    Reader reader() throws Exception;
+  Reader reader() throws Exception;
 
+  Writer writer() throws Exception;
 
-    Writer writer() throws Exception;
+  OutputStream output() throws Exception;
 
+  InputStream input() throws Exception;
 
-    OutputStream output() throws Exception;
+  Single<Boolean> exists();
 
+  Single<Boolean> createNew() throws Exception;
 
-    InputStream input() throws Exception;
+  Single<Boolean> delete() throws Exception;
 
-    Single<Boolean> exists();
+  <T> Single<T> converterWrite(T value, Converter converter, Type type) throws Exception;
 
-    Single<Boolean> createNew() throws Exception;
+  void startRead();
 
-    Single<Boolean> delete() throws Exception;
+  void endRead();
 
-    <T> Single<T> converterWrite(T value, Converter converter, Type type) throws Exception;
+  void startWrite();
 
-    void startRead();
-
-    void endRead();
-
-    void startWrite();
-
-    void endWrite();
+  void endWrite();
 }

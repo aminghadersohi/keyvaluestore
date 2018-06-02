@@ -16,22 +16,21 @@
 package com.ludwig.keyvaluestore;
 
 /**
- * Represents something going horribly wrong when a {@link Converter} tries to
- * {@link Converter#read} or {@link Converter#write}.
+ * Represents something going horribly wrong when a {@link Converter} tries to {@link
+ * Converter#read} or {@link Converter#write}.
  */
 public class ConverterException extends RuntimeException {
-    public ConverterException() {
-    }
+  public ConverterException() {}
 
-    public ConverterException(String detailMessage) {
-        super(detailMessage);
-    }
+  public ConverterException(String detailMessage) {
+    super(detailMessage);
+  }
 
-    public ConverterException(String detailMessage, Throwable throwable) {
-        super(detailMessage, throwable);
-    }
+  public ConverterException(String detailMessage, Throwable throwable) {
+    super(detailMessage, throwable);
+  }
 
-    public ConverterException(Throwable throwable) {
-        super(throwable);
-    }
+  public ConverterException(Throwable throwable) {
+    super(throwable);
+  }
 }

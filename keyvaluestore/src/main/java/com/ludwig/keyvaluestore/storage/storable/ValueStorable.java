@@ -21,21 +21,15 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-
-
 import java.lang.reflect.Type;
 
 public interface ValueStorable {
 
+  <T> Maybe<T> get(Converter converter, Type type);
 
-    <T> Maybe<T> get(Converter converter, Type type);
+  <T> Single<T> put(Converter converter, Type type, T value);
 
+  <T> Observable<ValueUpdate<T>> observe(Converter converter, Type type);
 
-    <T> Single<T> put(Converter converter, Type type, T value);
-
-
-    <T> Observable<ValueUpdate<T>> observe(Converter converter, Type type);
-
-
-    <T> Completable clear();
+  <T> Completable clear();
 }

@@ -22,275 +22,262 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-
 import io.reactivex.subjects.PublishSubject;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
 
 public class ListStorableV1 implements ListStorable {
-    private final PublishSubject updateSubject = PublishSubject.create();
-    private final Store store;
+  private final PublishSubject updateSubject = PublishSubject.create();
+  private final Store store;
 
-    ListStorableV1(Store store) {
-        this.store = store;
-    }
+  ListStorableV1(Store store) {
+    this.store = store;
+  }
 
-    @Override
-    public <T> Single<List<T>> get(Converter converter, Type type) {
-        return Completable.fromAction(store::startRead)
-                .andThen(store.exists())
-                .filter(Boolean::booleanValue)
-                .map(exists -> Optional.ofNullable(converter.<List<T>>read(store, type)))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .toSingle(Collections.emptyList())
-                .doFinally(store::endRead);
-    }
+  @Override
+  public <T> Single<List<T>> get(Converter converter, Type type) {
+    return Completable.fromAction(store::startRead)
+        .andThen(store.exists())
+        .filter(Boolean::booleanValue)
+        .map(exists -> Optional.ofNullable(converter.<List<T>>read(store, type)))
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .toSingle(Collections.emptyList())
+        .doFinally(store::endRead);
+  }
 
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> Single<List<T>> put(Converter converter, Type type, List<T> list) {
+    return Completable.fromAction(store::startWrite)
+        .andThen(store.exists())
+        .flatMap(exists -> exists ? Single.just(true) : store.createNew())
+        .flatMap(
+            exists -> {
+              if (!exists) {
+                throw new IOException("Could not create store.");
+              }
+              return store.converterWrite(list, converter, type);
+            })
+        .doOnSuccess(updateSubject::onNext)
+        .doFinally(store::endWrite);
+  }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T> Single<List<T>> put(Converter converter, Type type, List<T> list) {
-        return Completable.fromAction(store::startWrite)
-                .andThen(store.exists())
-                .flatMap(exists -> exists ? Single.just(true) : store.createNew())
-                .flatMap(exists -> {
-                    if (!exists) {
-                        throw new IOException("Could not create store.");
-                    }
-                    return store.converterWrite(list, converter, type);
-                })
-                .doOnSuccess(updateSubject::onNext)
-                .doFinally(store::endWrite);
-    }
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> Observable<List<T>> observe(Converter converter, Type type) {
+    return updateSubject.startWith(get(converter, type).toObservable()).hide();
+  }
 
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> Single<List<T>> clear() {
+    return Completable.fromAction(store::startWrite)
+        .andThen(store.exists())
+        .flatMap(exists -> exists ? store.delete() : Single.just(true))
+        .map(
+            success -> {
+              if (!success) {
+                throw new IOException("Clear operation on store failed.");
+              }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T> Observable<List<T>> observe(Converter converter, Type type) {
-        return updateSubject.startWith(get(converter, type).toObservable()).hide();
-    }
+              return Collections.<T>emptyList();
+            })
+        .doOnSuccess(o -> updateSubject.onNext(Collections.<T>emptyList()))
+        .doFinally(store::endWrite);
+  }
 
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> Single<List<T>> append(T value, Converter converter, Type type) {
+    return Completable.fromAction(store::startWrite)
+        .andThen(store.exists())
+        .flatMap(exists -> exists ? Single.just(true) : store.createNew())
+        .map(
+            success -> {
+              if (!success) {
+                throw new IOException("Could not create store.");
+              }
+              return Optional.ofNullable(converter.<List<T>>read(store, type));
+            })
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .toSingle(Collections.emptyList())
+        .flatMap(
+            originalList -> {
+              List<T> result = new ArrayList<>(originalList.size() + 1);
+              result.addAll(originalList);
+              result.add(value);
+              return store.converterWrite(result, converter, type);
+            })
+        .doOnSuccess(updateSubject::onNext)
+        .doFinally(store::endWrite);
+  }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T> Single<List<T>> clear() {
-        return Completable.fromAction(store::startWrite)
-                .andThen(store.exists())
-                .flatMap(exists -> exists ? store.delete() : Single.just(true))
-                .map(success -> {
-                    if (!success) {
-                        throw new IOException("Clear operation on store failed.");
-                    }
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> Single<List<T>> replace(
+      T value, ListType.PredicateFunc<T> predicateFunc, Converter converter, Type type) {
+    return Completable.fromAction(store::startWrite)
+        .andThen(store.exists())
+        .filter(Boolean::booleanValue)
+        .flatMap(
+            exists -> {
+              List<T> originalList = converter.read(store, type);
+              if (originalList == null) originalList = Collections.emptyList();
 
-                    return Collections.<T>emptyList();
-                })
-                .doOnSuccess(o -> updateSubject.onNext(Collections.<T>emptyList()))
-                .doFinally(store::endWrite);
-    }
+              int indexOfItemToReplace = -1;
 
+              for (int i = 0; i < originalList.size(); i++) {
+                if (predicateFunc.test(originalList.get(i))) {
+                  indexOfItemToReplace = i;
+                  break;
+                }
+              }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T> Single<List<T>> append(T value, Converter converter, Type type) {
-        return Completable
-                .fromAction(store::startWrite)
-                .andThen(store.exists())
-                .flatMap(exists -> exists ? Single.just(true) : store.createNew())
-                .map(success -> {
-                    if (!success) {
-                        throw new IOException("Could not create store.");
-                    }
-                    return Optional.ofNullable(converter.<List<T>>read(store, type));
-                })
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .toSingle(Collections.emptyList())
-                .flatMap(originalList -> {
-                    List<T> result = new ArrayList<>(originalList.size() + 1);
-                    result.addAll(originalList);
-                    result.add(value);
-                    return store.converterWrite(result, converter, type);
-                })
-                .doOnSuccess(updateSubject::onNext)
-                .doFinally(store::endWrite);
-    }
+              if (indexOfItemToReplace != -1) {
+                List<T> modifiedList = new ArrayList<T>(originalList);
+                modifiedList.remove(indexOfItemToReplace);
+                modifiedList.add(indexOfItemToReplace, value);
+                return store.converterWrite(modifiedList, converter, type).toMaybe();
+              }
+              return Maybe.just(originalList);
+            })
+        .toSingle(Collections.<T>emptyList())
+        .doOnSuccess(updateSubject::onNext)
+        .doFinally(store::endWrite);
+  }
 
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> Single<List<T>> addOrReplace(
+      T value, ListType.PredicateFunc<T> predicateFunc, Converter converter, Type type) {
+    return Completable.fromAction(store::startWrite)
+        .andThen(store.exists())
+        .flatMap(exists -> exists ? Single.just(true) : store.createNew())
+        .flatMap(
+            createSuccess -> {
+              if (!createSuccess) {
+                throw new IOException("Could not create store.");
+              }
+              List<T> originalList = converter.read(store, type);
+              if (originalList == null) originalList = Collections.emptyList();
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T> Single<List<T>> replace(
-            T value,
-            ListType.PredicateFunc<T> predicateFunc,
-            Converter converter,
-            Type type) {
-        return Completable.fromAction(store::startWrite)
-                .andThen(store.exists())
-                .filter(Boolean::booleanValue)
-                .flatMap(exists -> {
-                    List<T> originalList = converter.read(store, type);
-                    if (originalList == null) originalList = Collections.emptyList();
+              int indexOfItemToReplace = -1;
 
-                    int indexOfItemToReplace = -1;
+              for (int i = 0; i < originalList.size(); i++) {
+                if (predicateFunc.test(originalList.get(i))) {
+                  indexOfItemToReplace = i;
+                  break;
+                }
+              }
 
-                    for (int i = 0; i < originalList.size(); i++) {
-                        if (predicateFunc.test(originalList.get(i))) {
-                            indexOfItemToReplace = i;
-                            break;
-                        }
-                    }
+              int modifiedListSize =
+                  indexOfItemToReplace == -1 ? originalList.size() + 1 : originalList.size();
 
-                    if (indexOfItemToReplace != -1) {
-                        List<T> modifiedList = new ArrayList<T>(originalList);
-                        modifiedList.remove(indexOfItemToReplace);
-                        modifiedList.add(indexOfItemToReplace, value);
-                        return store.converterWrite(modifiedList, converter, type).toMaybe();
-                    }
-                    return Maybe.just(originalList);
-                })
-                .toSingle(Collections.<T>emptyList())
-                .doOnSuccess(updateSubject::onNext)
-                .doFinally(store::endWrite);
-    }
+              List<T> modifiedList = new ArrayList<T>(modifiedListSize);
+              modifiedList.addAll(originalList);
 
+              if (indexOfItemToReplace == -1) {
+                modifiedList.add(value);
+              } else {
+                modifiedList.remove(indexOfItemToReplace);
+                modifiedList.add(indexOfItemToReplace, value);
+              }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public <T> Single<List<T>> addOrReplace(
-            T value,
-            ListType.PredicateFunc<T> predicateFunc,
-            Converter converter, Type type) {
-        return Completable.fromAction(store::startWrite)
-                .andThen(store.exists())
-                .flatMap(exists -> exists ? Single.just(true) : store.createNew())
-                .flatMap(createSuccess -> {
-                    if (!createSuccess) {
-                        throw new IOException("Could not create store.");
-                    }
-                    List<T> originalList = converter.read(store, type);
-                    if (originalList == null) originalList = Collections.emptyList();
+              return store.converterWrite(modifiedList, converter, type);
+            })
+        .doOnSuccess(updateSubject::onNext)
+        .doFinally(store::endWrite);
+  }
 
-                    int indexOfItemToReplace = -1;
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> Single<List<T>> remove(
+      final ListType.PredicateFunc<T> predicateFunc, Converter converter, Type type) {
+    return Completable.fromAction(store::startWrite)
+        .andThen(store.exists())
+        .filter(Boolean::booleanValue)
+        .flatMap(
+            exists -> {
+              List<T> originalList = converter.read(store, type);
+              if (originalList == null) originalList = Collections.emptyList();
 
-                    for (int i = 0; i < originalList.size(); i++) {
-                        if (predicateFunc.test(originalList.get(i))) {
-                            indexOfItemToReplace = i;
-                            break;
-                        }
-                    }
+              List<T> modifiedList = new ArrayList<T>(originalList);
 
-                    int modifiedListSize = indexOfItemToReplace == -1 ? originalList.size() + 1 :
-                            originalList.size();
+              boolean removed = false;
+              final Iterator<T> each = modifiedList.iterator();
+              while (each.hasNext()) {
+                if (predicateFunc.test(each.next())) {
+                  each.remove();
+                  removed = true;
+                  break;
+                }
+              }
 
-                    List<T> modifiedList = new ArrayList<T>(modifiedListSize);
-                    modifiedList.addAll(originalList);
+              if (removed) {
+                return store.converterWrite(modifiedList, converter, type).toMaybe();
+              }
+              return Maybe.just(modifiedList);
+            })
+        .toSingle(Collections.emptyList())
+        .doOnSuccess(updateSubject::onNext)
+        .doFinally(store::endWrite);
+  }
 
-                    if (indexOfItemToReplace == -1) {
-                        modifiedList.add(value);
-                    } else {
-                        modifiedList.remove(indexOfItemToReplace);
-                        modifiedList.add(indexOfItemToReplace, value);
-                    }
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> Single<List<T>> removeAll(
+      final ListType.PredicateFunc<T> predicateFunc, Converter converter, Type type) {
 
-                    return store.converterWrite(modifiedList, converter, type);
-                })
-                .doOnSuccess(updateSubject::onNext)
-                .doFinally(store::endWrite);
-    }
+    return Completable.fromAction(store::startWrite)
+        .andThen(store.exists())
+        .filter(Boolean::booleanValue)
+        .flatMap(
+            exists -> {
+              List<T> originalList = converter.read(store, type);
+              if (originalList == null) originalList = Collections.emptyList();
 
+              List<T> modifiedList = new ArrayList<T>(originalList);
 
-    @Override
+              boolean removed = false;
+              final Iterator<T> each = modifiedList.iterator();
+              while (each.hasNext()) {
+                if (predicateFunc.test(each.next())) {
+                  each.remove();
+                  removed = true;
+                }
+              }
 
-    @SuppressWarnings("unchecked")
-    public <T> Single<List<T>> remove(
-            final ListType.PredicateFunc<T> predicateFunc,
-            Converter converter, Type type) {
-        return Completable.fromAction(store::startWrite)
-                .andThen(store.exists())
-                .filter(Boolean::booleanValue)
-                .flatMap(exists -> {
-                    List<T> originalList = converter.read(store, type);
-                    if (originalList == null) originalList = Collections.emptyList();
+              if (removed) {
+                return store.converterWrite(modifiedList, converter, type).toMaybe();
+              }
+              return Maybe.just(modifiedList);
+            })
+        .toSingle(Collections.emptyList())
+        .doOnSuccess(updateSubject::onNext)
+        .doFinally(store::endWrite);
+  }
 
-                    List<T> modifiedList = new ArrayList<T>(originalList);
+  @Override
+  @SuppressWarnings("unchecked")
+  public <T> Single<List<T>> remove(int position, Converter converter, Type type) {
+    return Completable.fromAction(store::startWrite)
+        .andThen(store.exists())
+        .filter(Boolean::booleanValue)
+        .flatMap(
+            exists -> {
+              List<T> originalList = converter.read(store, type);
+              if (originalList == null) originalList = Collections.emptyList();
 
-                    boolean removed = false;
-                    final Iterator<T> each = modifiedList.iterator();
-                    while (each.hasNext()) {
-                        if (predicateFunc.test(each.next())) {
-                            each.remove();
-                            removed = true;
-                            break;
-                        }
-                    }
+              List<T> modifiedList = new ArrayList<T>(originalList);
+              modifiedList.remove(position);
 
-
-                    if (removed) {
-                        return store.converterWrite(modifiedList, converter, type).toMaybe();
-                    }
-                    return Maybe.just(modifiedList);
-                })
-                .toSingle(Collections.emptyList())
-                .doOnSuccess(updateSubject::onNext)
-                .doFinally(store::endWrite);
-    }
-
-    @Override
-
-    @SuppressWarnings("unchecked")
-    public <T> Single<List<T>> removeAll(
-            final ListType.PredicateFunc<T> predicateFunc,
-            Converter converter, Type type) {
-
-        return Completable.fromAction(store::startWrite)
-                .andThen(store.exists())
-                .filter(Boolean::booleanValue)
-                .flatMap(exists -> {
-                    List<T> originalList = converter.read(store, type);
-                    if (originalList == null) originalList = Collections.emptyList();
-
-                    List<T> modifiedList = new ArrayList<T>(originalList);
-
-                    boolean removed = false;
-                    final Iterator<T> each = modifiedList.iterator();
-                    while (each.hasNext()) {
-                        if (predicateFunc.test(each.next())) {
-                            each.remove();
-                            removed = true;
-                        }
-                    }
-
-
-                    if (removed) {
-                        return store.converterWrite(modifiedList, converter, type).toMaybe();
-                    }
-                    return Maybe.just(modifiedList);
-                })
-                .toSingle(Collections.emptyList())
-                .doOnSuccess(updateSubject::onNext)
-                .doFinally(store::endWrite);
-    }
-
-    @Override
-
-    @SuppressWarnings("unchecked")
-    public <T> Single<List<T>> remove(int position, Converter converter, Type type) {
-        return Completable.fromAction(store::startWrite)
-                .andThen(store.exists())
-                .filter(Boolean::booleanValue)
-                .flatMap(exists -> {
-                    List<T> originalList = converter.read(store, type);
-                    if (originalList == null) originalList = Collections.emptyList();
-
-                    List<T> modifiedList = new ArrayList<T>(originalList);
-                    modifiedList.remove(position);
-
-                    return store.converterWrite(modifiedList, converter, type).toMaybe();
-                })
-                .toSingle(Collections.emptyList())
-                .doOnSuccess(updateSubject::onNext)
-                .doFinally(store::endWrite);
-    }
+              return store.converterWrite(modifiedList, converter, type).toMaybe();
+            })
+        .toSingle(Collections.emptyList())
+        .doOnSuccess(updateSubject::onNext)
+        .doFinally(store::endWrite);
+  }
 }

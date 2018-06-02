@@ -19,45 +19,33 @@ import com.ludwig.keyvaluestore.Converter;
 import com.ludwig.keyvaluestore.types.ListType;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-
-
 import java.lang.reflect.Type;
 import java.util.List;
 
 public interface ListStorable {
-    <T> Single<List<T>> get(Converter converter, Type type);
+  <T> Single<List<T>> get(Converter converter, Type type);
 
+  <T> Single<List<T>> remove(
+      ListType.PredicateFunc<T> predicateFunc, Converter converter, Type type);
 
-    <T> Single<List<T>> remove(
-            ListType.PredicateFunc<T> predicateFunc,
-            Converter converter,
-            Type type);
+  @SuppressWarnings("unchecked")
+  <T> Single<List<T>> removeAll(
+      ListType.PredicateFunc<T> predicateFunc, Converter converter, Type type);
 
+  @SuppressWarnings("unchecked")
+  <T> Single<List<T>> remove(int position, Converter converter, Type type);
 
-    @SuppressWarnings("unchecked")
-    <T> Single<List<T>> removeAll(
-            ListType.PredicateFunc<T> predicateFunc,
-            Converter converter, Type type);
+  <T> Single<List<T>> put(Converter converter, Type type, List<T> list);
 
+  <T> Observable<List<T>> observe(Converter converter, Type type);
 
-    @SuppressWarnings("unchecked")
-    <T> Single<List<T>> remove(int position, Converter converter, Type type);
+  <T> Single<List<T>> clear();
 
+  <T> Single<List<T>> append(T value, Converter converter, Type type);
 
-    <T> Single<List<T>> put(Converter converter, Type type, List<T> list);
+  <T> Single<List<T>> replace(
+      T value, ListType.PredicateFunc<T> predicateFunc, Converter converter, Type type);
 
-
-    <T> Observable<List<T>> observe(Converter converter, Type type);
-
-
-    <T> Single<List<T>> clear();
-
-
-    <T> Single<List<T>> append(T value, Converter converter, Type type);
-
-
-    <T> Single<List<T>> replace(T value, ListType.PredicateFunc<T> predicateFunc, Converter converter, Type type);
-
-
-    <T> Single<List<T>> addOrReplace(T value, ListType.PredicateFunc<T> predicateFunc, Converter converter, Type type);
+  <T> Single<List<T>> addOrReplace(
+      T value, ListType.PredicateFunc<T> predicateFunc, Converter converter, Type type);
 }
