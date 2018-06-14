@@ -16,57 +16,22 @@
 package com.ludwig.keyvaluestore.storage.unit;
 
 import com.ludwig.keyvaluestore.Converter;
+import com.ludwig.keyvaluestore.storage.FileStorageAdapter;
 import io.reactivex.Single;
 import io.reactivex.annotations.Nullable;
-import java.io.*;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class FileStorageUnit implements StorageUnit {
+public class FileStorageUnit extends AdaptableStorageUnit {
   protected final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-  private final File file;
   @Nullable private Integer readCount;
+  private FileStorageAdapter fileStorageAdapter;
 
-  public FileStorageUnit(File file) {
-    this.file = file;
-  }
-
-  @Override
-  @SuppressWarnings("DefaultCharset")
-  public Writer writer() throws IOException {
-    return new FileWriter(this.file);
-  }
-
-  @Override
-  @SuppressWarnings("DefaultCharset")
-  public Reader reader() throws IOException {
-    return new FileReader(this.file);
-  }
-
-  @Override
-  public OutputStream output() throws Exception {
-    return new FileOutputStream(this.file);
-  }
-
-  @Override
-  public InputStream input() throws Exception {
-    return new FileInputStream(this.file);
-  }
-
-  @Override
-  public Single<Boolean> exists() {
-    return Single.fromCallable(() -> FileStorageUnit.this.file.exists());
-  }
-
-  @Override
-  public Single<Boolean> createNew() {
-    return Single.fromCallable(() -> FileStorageUnit.this.file.createNewFile());
-  }
-
-  @Override
-  public Single<Boolean> delete() {
-    return Single.fromCallable(() -> FileStorageUnit.this.file.delete());
+  public FileStorageUnit(String key, FileStorageAdapter fileStorageAdapter) {
+    super(key, fileStorageAdapter);
+    this.fileStorageAdapter = fileStorageAdapter;
   }
 
   @Override
@@ -132,11 +97,11 @@ public class FileStorageUnit implements StorageUnit {
   }
 
   private Single<FileStorageUnit> createTemp() {
-    return Single.fromCallable(
-        () -> new FileStorageUnit(new File(this.file.getAbsolutePath() + ".tmp")));
+    return Single.fromCallable(() -> new FileStorageUnit(key + ".tmp", fileStorageAdapter));
   }
 
-  private Single<Boolean> set(FileStorageUnit storage) {
-    return Single.fromCallable(() -> storage.file.renameTo(this.file));
+  private Single<Boolean> set(FileStorageUnit storageUnit) {
+    return Single.fromCallable(
+        () -> fileStorageAdapter.file(storageUnit.key).renameTo(fileStorageAdapter.file(key)));
   }
 }

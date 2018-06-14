@@ -15,10 +15,13 @@
  */
 package com.example.keyvaluestore;
 
+import static java.lang.Thread.sleep;
+
 import com.ludwig.keyvaluestore.KeyValueStore;
 import com.ludwig.keyvaluestore.KeyValueStoreFactory;
 import com.ludwig.keyvaluestore.converters.MoshiConverter;
 import com.ludwig.keyvaluestore.storage.FileStorage;
+import com.ludwig.keyvaluestore.storage.FileStorageAdapter;
 import com.ludwig.keyvaluestore.types.ListType;
 import com.ludwig.keyvaluestore.types.ValueType;
 import com.ludwig.keyvaluestore.types.ValueUpdate;
@@ -29,7 +32,9 @@ import java.util.List;
 public class KeyValueStoreExample {
   @SuppressWarnings({"CheckReturnValue", "CatchAndPrintStackTrace"})
   public static void main(String[] args) {
-    KeyValueStore store = KeyValueStoreFactory.build(new FileStorage("/tmp"), new MoshiConverter());
+    KeyValueStore store =
+        KeyValueStoreFactory.build(
+            new FileStorage(new FileStorageAdapter("/tmp")), new MoshiConverter());
     ValueType<String> valueStore = store.value("value", String.class);
     ListType<String> listStore = store.list("list", String.class);
 
@@ -84,20 +89,24 @@ public class KeyValueStoreExample {
     listStore.observeClear().blockingGet();
     valueStore.observeClear().blockingGet();
 
-    for (int j = 0; j < 100; j++) {
+    for (int j = 0; j < 10; j++) {
       final int _j = j;
       Runnable runnable =
           () -> {
-            listStore.observeClear().blockingGet();
             for (int i = _j; i < 1000 + _j; i++) {
               final int _i = i;
               double rand = Math.random();
-              if (rand <= 0.001) {
+              if (rand <= 0.0001) {
                 listStore.observeClear().blockingGet();
               } else if (rand <= 0.011) {
                 listStore.observeAdd("listvalue" + i).blockingGet();
               } else {
-                listStore.observeRemove(value -> value.equals("listvalue" + _i)).blockingGet();
+                //                listStore.observeRemove(value -> value.equals("listvalue" + _i)).blockingGet();
+              }
+              try {
+                sleep(1);
+              } catch (InterruptedException e) {
+                e.printStackTrace();
               }
             }
           };

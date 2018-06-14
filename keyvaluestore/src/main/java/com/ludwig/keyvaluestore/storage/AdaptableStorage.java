@@ -18,7 +18,6 @@ package com.ludwig.keyvaluestore.storage;
 import com.ludwig.keyvaluestore.storage.storable.ListStorable;
 import com.ludwig.keyvaluestore.storage.storable.StorableFactory;
 import com.ludwig.keyvaluestore.storage.storable.ValueStorable;
-import com.ludwig.keyvaluestore.storage.unit.AdaptableStorageUnit;
 
 public class AdaptableStorage implements Storage {
   private StorageAdapter storageAdapter;
@@ -29,11 +28,11 @@ public class AdaptableStorage implements Storage {
 
   @Override
   public ValueStorable value(String key) {
-    return StorableFactory.value(new AdaptableStorageUnit(key, storageAdapter));
+    return StorableFactory.value(storageAdapter.storageUnit(key));
   }
 
   @Override
   public ListStorable list(String key) {
-    return StorableFactory.list(new AdaptableStorageUnit(key, storageAdapter));
+    return StorableFactory.list(storageAdapter.storageUnit(key));
   }
 }
