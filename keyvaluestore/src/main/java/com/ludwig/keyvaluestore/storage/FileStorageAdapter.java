@@ -3,6 +3,8 @@ package com.ludwig.keyvaluestore.storage;
 import com.ludwig.keyvaluestore.storage.unit.FileStorageUnit;
 import io.reactivex.Single;
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 
 public class FileStorageAdapter implements StorageAdapter {
   private String basePath;
@@ -28,7 +30,7 @@ public class FileStorageAdapter implements StorageAdapter {
 
   @Override
   public Reader reader(String key) throws IOException {
-    return new FileReader(file(key));
+    return Files.newBufferedReader(file(key).toPath(), Charset.defaultCharset());
   }
 
   @Override
@@ -38,7 +40,7 @@ public class FileStorageAdapter implements StorageAdapter {
 
   @Override
   public Writer writer(String key) throws IOException {
-    return new FileWriter(file(key));
+    return Files.newBufferedWriter(file(key).toPath(), Charset.defaultCharset());
   }
 
   @Override

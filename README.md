@@ -1,10 +1,16 @@
 KeyValueStore
 =======
 
-A reactive key value store that supports many storage types (singular and composite), and converters. 
+A extensible reactive key value store base on RxJava2 with an extensible storage, object type, and converter API. 
+
 
 Details
 -------
+
+KeyValueStore provides Mosho, Gson, and Jackson converters out of the box. 
+
+An adaptable storage API including a multi threaded file storage implementation allow persisting data to virtually anywhere. 
+Synchronized storage is currently WIP and will provide syncing between disk and network, or any other combination. 
 
 Usage
 -----

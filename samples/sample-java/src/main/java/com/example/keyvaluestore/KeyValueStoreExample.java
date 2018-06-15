@@ -15,8 +15,6 @@
  */
 package com.example.keyvaluestore;
 
-import static java.lang.Thread.sleep;
-
 import com.ludwig.keyvaluestore.KeyValueStore;
 import com.ludwig.keyvaluestore.KeyValueStoreFactory;
 import com.ludwig.keyvaluestore.converters.MoshiConverter;
@@ -27,6 +25,7 @@ import com.ludwig.keyvaluestore.types.ValueType;
 import com.ludwig.keyvaluestore.types.ValueUpdate;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
+import java.util.ArrayList;
 import java.util.List;
 
 public class KeyValueStoreExample {
@@ -81,39 +80,53 @@ public class KeyValueStoreExample {
     valueStore.observePut("value1").blockingGet();
     valueStore.observePut("value2").blockingGet();
     valueStore.observePut("value1").blockingGet();
-    listStore.observeAdd("listvalue1").blockingGet();
-    listStore.observeAdd("listvalue2").blockingGet();
-    listStore.observeAdd("listvalue3").blockingGet();
     valueStore.observePut("value2").blockingGet();
-    listStore.observeRemove(value -> value.equals("listvalue1")).blockingGet();
-    listStore.observeClear().blockingGet();
-    valueStore.observeClear().blockingGet();
 
-    for (int j = 0; j < 10; j++) {
+    listStore.observeClear().ignoreElement().blockingAwait();
+    int threadCount = 25;
+    List<Thread> threads = new ArrayList<>(threadCount * 2);
+
+    int elementsPerThread = 20;
+    for (int j = 0; j < threadCount; j++) {
       final int _j = j;
       Runnable runnable =
           () -> {
-            for (int i = _j; i < 1000 + _j; i++) {
-              final int _i = i;
-              double rand = Math.random();
-              if (rand <= 0.0001) {
-                listStore.observeClear().blockingGet();
-              } else if (rand <= 0.011) {
-                listStore.observeAdd("listvalue" + i).blockingGet();
-              } else {
-                //                listStore.observeRemove(value -> value.equals("listvalue" + _i)).blockingGet();
-              }
+            for (int i = _j * elementsPerThread; i < (_j + 1) * elementsPerThread; i++) {
+              listStore.observeAdd("lv" + _j + ": " + i).ignoreElement().blockingAwait();
+
               try {
-                sleep(1);
+                Thread.sleep((int) (Math.random() * 20));
               } catch (InterruptedException e) {
                 e.printStackTrace();
               }
             }
           };
+      threads.add(new Thread(runnable));
+    }
+    for (int j = 0; j < threadCount; j++) {
+      final int _j = j;
+      Runnable runnable =
+          () -> {
+            for (int i = _j * elementsPerThread; i < (_j + 1) * elementsPerThread; i++) {
+              final int _i = i;
 
-      Thread t = new Thread(runnable);
+              listStore
+                  .observeRemove(value -> value.equals("lv" + _j + ": " + _i))
+                  .ignoreElement()
+                  .blockingAwait();
+              try {
+                Thread.sleep((int) (Math.random() * 20));
+              } catch (InterruptedException e) {
+                e.printStackTrace();
+              }
+            }
+          };
+      threads.add(new Thread(runnable));
+    }
+    for (Thread t : threads) {
       t.start();
-
+    }
+    for (Thread t : threads) {
       try {
         t.join();
       } catch (InterruptedException e) {

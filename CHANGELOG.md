@@ -21,3 +21,8 @@ Version 1.0.3 *(2018-05-25)*
 * Google Java Format
 * NullAway
 * ErrorProne
+
+Version 1.0.4 *(2018-06-14)*
+----------------------------
+* AdaptableStorage
+* Update FileStorageUnit to extend AdaptableStorageUnit
